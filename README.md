@@ -1,6 +1,6 @@
 # Disaster Response Pipeline
 
-This repository contains a Machine Learning (ML) pipeline which predicts the response to messages in disasters. An ETL pipeline is also developed and everything is deployed with a web app based in Flask.
+This repository contains a Machine Learning (ML) pipeline which predicts the response to messages in disaster situations. An ETL pipeline is also developed and everything is deployed with a web app based in Flask.
 
 <p style="text-align:center">
   <img src="./assets/word_cloud.png" alt="A wordcloud." width=1000px>
