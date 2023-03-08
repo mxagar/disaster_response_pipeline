@@ -131,3 +131,4 @@ dmypy.json
 # Added
 .vscode
 eda_fe_summary
+.DS_Store
