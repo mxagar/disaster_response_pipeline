@@ -1,9 +1,9 @@
-data_messages_path: "./data/messages.csv"
-data_categories_path: "./data/categories.csv"
+messages_filepath: "./data/messages.csv"
+categories_filepath: "./data/categories.csv"
 test_size: 0.2
 random_seed: 42
-model_artifact: "./models/classifier.pkl"
-evaluation_artifact: "./models/evaluation_report.txt"
+model_filepath: "./models/classifier.pkl"
+evaluation_filepath: "./models/evaluation_report.txt"
 random_forest_parameters:
   # This section is passed to the random forest model
   # as a dictionary of parameters, thus names must match with
