@@ -24,6 +24,7 @@ I took the [`starter`](starter) code for this project from the [Udacity Data Sci
   - [Notes on the Implementation](#notes-on-the-implementation)
     - [ETL Pipeline](#etl-pipeline)
     - [Machine Learning Training Pipeline](#machine-learning-training-pipeline)
+      - [Notes on the Model Evaluation](#notes-on-the-model-evaluation)
     - [Flask Web App](#flask-web-app)
     - [Tests](#tests)
     - [Deployment to Heroku](#deployment-to-heroku)
@@ -127,6 +128,10 @@ pip list --format=freeze > requirements.txt
 
 [`models`](models)
 
+#### Notes on the Model Evaluation
+
+Imbalanced dataset.
+
 ### Flask Web App
 
 [`app/run.py`](./app/run.py)
@@ -171,8 +176,11 @@ pip list --format=freeze > requirements.txt
 
 ## Next Steps, Improvements
 
-- [ ] Extend tests
-
+- [ ] Extend tests; currently, the test package contains very few tests that serve as blueprint for further implementations.
+- [ ] Add more visualizations.
+- [ ] Based on the detected categories, suggest organizations to connect to.
+- [ ] Improve the front-end design.
+- [ ] Address the imbalanced nature of the dataset.
 
 ## References and Links
 
