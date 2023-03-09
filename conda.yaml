@@ -26,6 +26,9 @@ dependencies:
       - joblib
       - pytest
       - setuptools
+      - flake8
+      - pylint
+      - pydantic
       - wheel
       - Flask-SQLAlchemy
       - Flask-Migrate
