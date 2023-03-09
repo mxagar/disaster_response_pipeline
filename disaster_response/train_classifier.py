@@ -17,11 +17,15 @@ def evaluate_model(model, X_test, Y_test, category_names):
     pass
 
 
+def save_evaluation(model, model_filepath):
+    pass
+
+
 def save_model(model, model_filepath):
     pass
 
 
-def main():
+def run_training():
     if len(sys.argv) == 3:
         database_filepath, model_filepath = sys.argv[1:]
         print('Loading data...\n    DATABASE: {}'.format(database_filepath))
@@ -50,4 +54,4 @@ def main():
 
 
 if __name__ == '__main__':
-    main()
+    run_training()
