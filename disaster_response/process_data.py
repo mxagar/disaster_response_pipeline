@@ -34,7 +34,7 @@ def load_data(messages_filepath, categories_filepath):
     
     return df
 
-def clean_data(df):
+def clean_data(df, target_columns, nlp_columns):
     """..."""
     # Create a dataframe of the 36 individual category columns
     categories = df.categories.str.split(pat=";", n=-1, expand=True)
@@ -44,6 +44,15 @@ def clean_data(df):
     row = categories.iloc[0,:].to_list()
     category_colnames = [r.split('-')[0] for r in row]
     categories.columns = category_colnames
+    
+    # Check that the categories are the expected (not necessarily in same order)
+    for i, col in enumerate(category_colnames):
+        try:
+            #assert col == target_columns[i]
+            assert col in target_columns
+        except AssertionError as e:
+            logger.error("Unexpected category column found in merged dataset: %s.", col)
+            raise e
     
     # Map cell values from string-0/1 to 0/1
     for column in categories:
@@ -59,6 +68,12 @@ def clean_data(df):
 
     # Drop duplicates
     df = df.drop_duplicates().reset_index(drop=True)
+
+    # Drop any entry in which the input message is NA
+    df.dropna(subset=nlp_columns, inplace=True)
+    
+    # Drop any entry in which the target categories are NA
+    df.dropna(subset=category_colnames, inplace=True)
 
     return df
 
@@ -89,7 +104,9 @@ def run_etl(config_filepath,
 
     # Clean datasets
     print("Cleaning data...")
-    df = clean_data(df)
+    df = clean_data(df,
+                    config["target_columns"],
+                    config["nlp_columns"])
     logger.info("Datasets correctly cleaned.")
 
     # Load cleaned dataset to databse
@@ -110,8 +127,7 @@ if __name__ == '__main__':
     parser.add_argument("categories_filepath", type=str, required = False,
                         help="File path of the dataset with the categories.")
     parser.add_argument("database_filepath", type=str, required = False, 
-                        help="File path of the ETL output database."
-    )
+                        help="File path of the ETL output database.")
     # Parse arguments
     args = parser.parse_args()
     
