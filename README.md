@@ -12,7 +12,7 @@ The project is embedded in a Flask web app which visualizes the dataset and faci
   <img src="./assets/disaster_response_app.png" alt="A snapshot of the disaster response app." width=1000px>
 </p>
 
-
+I took the [`starter`](starter) code for this project from the [Udacity Data Scientist Nanodegree](https://www.udacity.com/course/data-scientist-nanodegree--nd025) and modified it to the present form, which deviates significantly from the original version.
 
 ## Table of Contents
 
@@ -43,8 +43,42 @@ The directory of the project consists of the following files:
 
 ```
 .
-├── Instructions.md           # Original challenge instructions
-...
+├── Instructions.md                             # Original challenge/project instructions
+├── README.md
+├── app
+│   ├── run.py
+│   └── templates
+│       ├── go.html
+│       └── master.html
+├── assets/
+├── data
+│   ├── DisasterResponse.db
+│   ├── Twitter-sentiment-self-drive-DFE.csv
+│   ├── categories.csv
+│   └── messages.csv
+├── disaster_response
+│   ├── __init__.py
+│   ├── process_data.py
+│   └── train_classifier.py
+├── models/
+├── notebooks
+│   ├── ETL_Pipeline_Preparation.ipynb
+│   └── ML_Pipeline_Preparation.ipynb
+├── config.yaml
+├── requirements.txt
+├── conda.yaml
+├── Dockerfile
+├── docker-compose.yaml
+├── run.sh
+├── Procfile
+├── runtime.txt
+├── setup.py
+├── starter/
+└── tests
+    ├── __init__.py
+    ├── conftest.py
+    ├── test_app.py
+    └── test_library.py
 ```
 
 You can run the notebook at leas in two ways:
@@ -83,13 +117,13 @@ pip list --format=freeze > requirements.txt
 
 ### ETL Pipeline
 
-[`process_data.py`](./process_data.py)
+[`distaster_response/process_data.py`](./distaster_response/process_data.py)
 
 [`data`](data)
 
 ### Machine Learning Training Pipeline
 
-[`train_classifier.py`](./train_classifier.py)
+[`distaster_response/train_classifier.py`](./distaster_response/train_classifier.py)
 
 [`models`](models)
 
@@ -98,6 +132,13 @@ pip list --format=freeze > requirements.txt
 [`app/run.py`](./app/run.py)
 
 ### Tests
+
+[`tests/conftest.py`](./tests/conftest.py)
+
+[`tests/test_library.py`](./tests/test_library.py)
+
+[`tests/test_app.py`](./tests/test_app.py)
+
 
 ### Deployment to Heroku
 
