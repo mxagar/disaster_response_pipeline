@@ -19,6 +19,7 @@ from typing import Dict, List, Optional, Tuple # Sequence
 #import numpy as np
 import pandas as pd
 from sqlalchemy import create_engine
+from sqlite3 import OperationalError
 
 
 # Logging configuration
@@ -31,6 +32,7 @@ logging.basicConfig(
 # Thi will be imported in the rest of the modules
 logger = logging.getLogger()
 
+DATABASE_TABLE_NAME = "Message"
 
 class ModelConfig(BaseModel):
     """
@@ -74,12 +76,12 @@ class GeneralConfig(BaseModel):
     training and data processing
     (i.e., feature engineering, etc.).
     """
-    data_messages_path: str
-    data_categories_path: str
+    messages_filepath: str
+    categories_filepath: str
     test_size: float
     random_seed: int
-    model_artifact: str
-    evaluation_artifact: str
+    model_filepath: str
+    evaluation_filepath: str
     random_forest_parameters: ModelConfig
     random_forest_grid_search: TrainingConfig
 
@@ -200,8 +202,61 @@ def save_to_database(df,
     # Connect to SQLite database with SQLAlchemy
     engine = create_engine(f"sqlite:///{database_filename}")
     # Dump table, remove if it already exists
-    df.to_sql('Message', engine, if_exists="replace", index=False)
+    df.to_sql(DATABASE_TABLE_NAME, engine, if_exists="replace", index=False)
 
+
+def load_validate_database_df(categorical_columns,
+                              nlp_columns,
+                              target_columns,
+                              database_filename="data/DisasterResponse.db"):
+    """..."""
+    # Load dataset
+    try:
+        # Connect to database
+        engine = create_engine(f"sqlite:///{database_filename}")
+        # Run SELECT * query; WATCH OUT: Using this SQL query text requires sqlalchemy<2.0
+        df = pd.read_sql(f"SELECT * FROM {DATABASE_TABLE_NAME}", engine)
+    except OperationalError as e:
+        logger.error("Table Message cannot be accessed in %s.", database_filename)
+        raise e
+
+    # Validate dataframe shape and column names
+    try:
+        assert df.shape[0] > 10
+        assert df.shape[1] == 40
+    except AssertionError as e:
+        logger.error("Unexpected shape of dataset messages: %s.", str(df.shape))
+        raise e  
+    
+    all_processed_cols = categorical_columns + nlp_columns + target_columns
+    for col in all_processed_cols:
+        try:
+            assert col in list(df.columns)
+        except AssertionError as e:
+            logger.error("Expected column not found: %s.", col)
+            raise e
+        
+    return df
+
+def save_model(model: RandomForestClassifier,
+               model_artifact: str = "./exported_artifacts/model.pickle") -> None:
+    """Persists the model object into a serialized pickle file.
+    Inputs
+    ------
+    model : RandomForestClassifier
+        The (trained) model.
+    model_artifact: str (default = "./exported_artifacts/model.pickle")
+        File path to persist the model.
+    Returns
+    -------
+    None
+    """
+    with open(model_artifact, 'wb') as f:
+        # wb: write bytes
+        pickle.dump(model, f)
+        
+def save_evaluation_report():
+    pass
 
 def load_validate_model(
     model_artifact: str = "./exported_artifacts/model.pickle") -> RandomForestClassifier:
@@ -231,25 +286,3 @@ def load_validate_model(
 
     return model
 
-def save_model(model: RandomForestClassifier,
-               model_artifact: str = "./exported_artifacts/model.pickle") -> None:
-    """Persists the model object into a serialized pickle file.
-    Inputs
-    ------
-    model : RandomForestClassifier
-        The (trained) model.
-    model_artifact: str (default = "./exported_artifacts/model.pickle")
-        File path to persist the model.
-    Returns
-    -------
-    None
-    """
-    with open(model_artifact, 'wb') as f:
-        # wb: write bytes
-        pickle.dump(model, f)
-        
-def load_validate_database_df():
-    pass
-
-def save_evaluation_report():
-    pass
