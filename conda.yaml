@@ -3,30 +3,29 @@ channels:
   - conda-forge
   - defaults
 dependencies:
-  - python=3.10
+  - python=3.9.16
   - requests
   - pip
-  - mlflow
-  - hydra-core
   - jupyter
   - jupyterlab
   - scikit-learn
   - scipy
   - numpy
   - pandas
-  - pandas-datareader
   - matplotlib
   - seaborn
   - nltk
   - numba
   - tqdm
+  - flask
+  - flask-wtf
   - pip:
       - protobuf
       - chardet
-      - hydra-joblib-launcher
-      - wandb
       - autopep8
       - joblib
       - pytest
       - setuptools
       - wheel
+      - Flask-SQLAlchemy
+      - Flask-Migrate
