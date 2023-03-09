@@ -1,0 +1,53 @@
+data_messages_path: "./data/messages.csv"
+data_categories_path: "./data/categories.csv"
+test_size: 0.2
+random_seed: 42
+model_artifact: "./models/classifier.pkl"
+evaluation_artifact: "./models/evaluation_report.txt"
+random_forest_parameters:
+  # This section is passed to the random forest model
+  # as a dictionary of parameters, thus names must match with
+  # the sklearn API.
+  # Whenever we have model or other object with many parameters
+  # we should write config files for them.
+  # That is easier than passing parameters in the code or via CLI
+  # and we can guarantee compatibility in the code in case the model API changes
+  # (i.e., we would simply change the config file).
+  # NOTE: These default parameters can be overwritten
+  # by the hyperparameter tuning 
+  n_estimators: 100
+  criterion: 'gini'
+  max_depth: 13
+  min_samples_split: 2
+  min_samples_leaf: 1
+  min_weight_fraction_leaf: 0.0
+  max_features: 'auto'
+  max_leaf_nodes: null
+  min_impurity_decrease: 0.0
+  bootstrap: true
+  oob_score: false
+  n_jobs: null
+  random_state: 42
+  verbose: 0
+  warm_start: false
+  class_weight: "balanced"
+  ccp_alpha: 0.0
+  max_samples: null
+random_forest_grid_search:
+  hyperparameters:
+    n_estimators:
+      - 100
+      - 150
+      - 200
+    max_features:
+      - "sqrt"
+      - "log2"
+    criterion:
+      - "gini"
+      - "entropy"
+    max_depth:
+      - 5
+      - 10
+      - 15
+  cv: 3
+  scoring: 'f1'
