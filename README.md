@@ -1,16 +1,18 @@
 # Disaster Response Pipeline
 
-This repository contains a Machine Learning (ML) pipeline which predicts the response to messages in disaster situations. An ETL pipeline is also developed and everything is deployed with a web app based in Flask.
+This repository contains a Machine Learning (ML) pipeline which predicts the response to messages in disaster situations. An ETL pipeline is also developed and the project is deployed to Heroku using a web app based on Flask; the final version is available under the following link (it might take some time to awaken the app the first time):
+
+LINK
+
+It is precisely during disaster situations, that the response organizations have the least capacity to evaluate and react properly to each message that arrives to them (via direct contact, social media, etc.). In this project, NLP is applied and a classification model trained so that the category of each message can be predicted automatically; then, the messages can be directed to the appropriate relief agencies.
+
+The project is embedded in a Flask web app which visualizes the dataset and facilitates the usage of the classifier with a GUI:
 
 <p style="text-align:center">
-  <img src="./assets/word_cloud.png" alt="A wordcloud." width=1000px>
+  <img src="./assets/disaster_response_app.png" alt="A snapshot of the disaster response app." width=1000px>
 </p>
 
-Questions:
 
-1. A
-2. B
-3. C
 
 ## Table of Contents
 
@@ -19,15 +21,21 @@ Questions:
   - [Dataset](#dataset)
   - [How to Use This Project](#how-to-use-this-project)
     - [Installing Dependencies for Custom Environments](#installing-dependencies-for-custom-environments)
-  - [Notes on Theory](#notes-on-theory)
-  - [Notes on the Implemented Analysis and Modeling](#notes-on-the-implemented-analysis-and-modeling)
+  - [Notes on the Implementation](#notes-on-the-implementation)
+    - [ETL Pipeline](#etl-pipeline)
+    - [Machine Learning Training Pipeline](#machine-learning-training-pipeline)
+    - [Flask Web App](#flask-web-app)
+    - [Tests](#tests)
+    - [Deployment to Heroku](#deployment-to-heroku)
+    - [Docker Container](#docker-container)
     - [Summary of Contents](#summary-of-contents)
-  - [Results and Conclusions](#results-and-conclusions)
   - [Next Steps, Improvements](#next-steps-improvements)
   - [References and Links](#references-and-links)
   - [Authorship](#authorship)
 
 ## Dataset
+
+[`data`](data)
 
 ## How to Use This Project
 
@@ -54,36 +62,76 @@ If you'd like to control where the notebook runs, you need to create a custom en
 ```bash
 # Create environment with YAML, incl. packages
 conda env create -f conda.yaml
-conda activate env-name
-# Or
-conda create --name env-name pip
-conda install <package>
+conda activate dis-res
 
-# Install pip dependencies
-pip install requirements.txt
+# Alternatively, if you prefer, create your own environment
+# and install the dependencies with pip
+conda create --name dis-res pip
+conda activate dis-res
+pip install -r requirements.txt
 
-# Track any changes and versions you have
-conda env export > conda_.yaml
-pip list --format=freeze > requirements_.txt
+# To track any changes and versions you have
+conda env export > conda.yaml
+pip list --format=freeze > requirements.txt
 ```
 
-List of most important dependencies:
+[`conda.yaml`](./conda.yaml)
 
-- A
-- B
+[`requirements.txt`](./requirements.txt)
 
-## Notes on Theory
+## Notes on the Implementation
 
-## Notes on the Implemented Analysis and Modeling
+### ETL Pipeline
+
+[`process_data.py`](./process_data.py)
+
+[`data`](data)
+
+### Machine Learning Training Pipeline
+
+[`train_classifier.py`](./train_classifier.py)
+
+[`models`](models)
+
+### Flask Web App
+
+[`app/run.py`](./app/run.py)
+
+### Tests
+
+### Deployment to Heroku
+
+[`Procfile`](./Procfile)
+
+[`.slugignore`](.slugignore)
+
+[`runtime.txt`](runtime.txt)
+
+[`requirements.txt`](./requirements.txt)
+
+### Docker Container
+
+[`Dockerfile`](./Dockerfile)
+
+[`.dockerignore`](.dockerignore)
+
+[`docker-compose.yaml`](./docker-compose.yaml)
+
+[`run.sh`](./run.sh)
 
 ### Summary of Contents
 
-- [ ] A
-- [ ] B
-
-## Results and Conclusions
+- [x] ETL Pipeline in which datasets are merged and loaded to a SQLite database.
+- [x] ML Pipeline which applies NLP to extract text features and train a random forest classifier.
+- [x] Flask Web App
+- [x] Tests
+- [x] Deployment to Heroku using Continuous Integration and Continuous Delivery (CI/CD).
+- [x] Containerization (Docker)
 
 ## Next Steps, Improvements
+
+- [ ] Extend tests
+
 
 ## References and Links
 
