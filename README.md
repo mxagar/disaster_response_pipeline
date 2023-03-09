@@ -59,9 +59,12 @@ The directory of the project consists of the following files:
 │   └── messages.csv
 ├── disaster_response
 │   ├── __init__.py
+│   ├── file_manager.py
 │   ├── process_data.py
 │   └── train_classifier.py
 ├── models/
+├── logs
+│   └── disaster_response_pipeline.log
 ├── notebooks
 │   ├── ETL_Pipeline_Preparation.ipynb
 │   └── ML_Pipeline_Preparation.ipynb
@@ -106,7 +109,7 @@ conda activate dis-res
 pip install -r requirements.txt
 
 # To track any changes and versions you have
-conda env export > conda.yaml
+conda env export > conda_.yaml
 pip list --format=freeze > requirements.txt
 ```
 
@@ -121,6 +124,23 @@ pip list --format=freeze > requirements.txt
 [`distaster_response/process_data.py`](./distaster_response/process_data.py)
 
 [`data`](data)
+
+```bash
+cd data
+# Enter SQLite terminal
+sqlite3
+# Open a DB
+.open DisasterResponse.db
+# Show tables
+.tables # Student
+# Get table info/columns & types
+PRAGMA table_info(Message);
+# Get first 5 entries
+SELECT * FROM Message LIMIT 5;
+# ...
+# Exit SQLite CLI terminal
+.quit
+```
 
 ### Machine Learning Training Pipeline
 
@@ -176,7 +196,10 @@ Imbalanced dataset.
 
 ## Next Steps, Improvements
 
+- [x] Add logging.
+- [x] Lint with `flake8` and `pylint`.
 - [ ] Extend tests; currently, the test package contains very few tests that serve as blueprint for further implementations.
+- [ ] Add type hints to `process_data.py` and `train_classifier.py`; currently type hints and `pydantic` are used only in `file_manager.py` to clearly define loading and persistence functionalities and to validate the objects they handle.
 - [ ] Add more visualizations.
 - [ ] Based on the detected categories, suggest organizations to connect to.
 - [ ] Improve the front-end design.
