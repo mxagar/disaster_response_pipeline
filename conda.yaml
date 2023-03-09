@@ -29,6 +29,7 @@ dependencies:
       - flake8
       - pylint
       - pydantic
+      - sqlalchemy<2.0
       - wheel
       - Flask-SQLAlchemy
       - Flask-Migrate
