@@ -1,12 +1,20 @@
 """This module performs the ETL pipeline
 of the project, executing these steps:
 
-- A
-- B
+- Load the source datasets.
+- Clean and merge the datasets.
+- Save the processed dataset into a SQLite database.
 
-Pylint: 
+All settings are in config.yaml.
+
+Pylint: X
+
+To use this, run in a correct environment:
+
+    $ python process_data.py --config_filepath config.yaml
 
 Author: Mikel Sagardia
+Date: 2023-03-09
 """
 #import sys
 import argparse
