@@ -1,5 +1,6 @@
 messages_filepath: "./data/messages.csv"
 categories_filepath: "./data/categories.csv"
+database_filepath: "./data/DisasterResponse.db"
 test_size: 0.2
 random_seed: 42
 model_filepath: "./models/classifier.pkl"
@@ -21,7 +22,7 @@ random_forest_parameters:
   min_samples_split: 2
   min_samples_leaf: 1
   min_weight_fraction_leaf: 0.0
-  max_features: 'auto'
+  max_features: 'sqrt'
   max_leaf_nodes: null
   min_impurity_decrease: 0.0
   bootstrap: true
@@ -33,24 +34,16 @@ random_forest_parameters:
   class_weight: "balanced"
   ccp_alpha: 0.0
   max_samples: null
-random_forest_grid_search:
+grid_search:
   hyperparameters:
     n_estimators:
       - 100
-      - 150
       - 200
-    max_features:
-      - "sqrt"
-      - "log2"
-    criterion:
-      - "gini"
-      - "entropy"
-    max_depth:
-      - 5
-      - 10
-      - 15
+    min_samples_split:
+      - 2
+      - 3
   cv: 3
-  scoring: 'f1'
+#  scoring: 'f1'
 categorical_columns:
   - "genre"
 nlp_columns:
