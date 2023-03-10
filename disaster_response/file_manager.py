@@ -230,7 +230,7 @@ def load_validate_database_df(categorical_columns,
         categorical_columns (list): list with the names of the categorical columns.
         nlp_columns (list): list with the names of the text columns.
         target_columns (list): list with the names of the target columns
-        database_filename (str): 
+        database_filename (str): filename of the database.
     
     Returns:
         df (pd.DataFrame): loaded and validated dataframe.
