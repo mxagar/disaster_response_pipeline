@@ -1,8 +1,9 @@
 """This module contains
 general data structure definitions and their respective
 loading, validation and saving functions.
-In other words, it is a data manager for all structures
-used in the library.
+In other words, the module is a data manager for all structures
+used in the library, and acts also
+as a persistence/loading manager.
 
 Pylint: X.
 
@@ -15,11 +16,12 @@ import pickle
 import yaml
 import chardet
 from pydantic import BaseModel, ValidationError
-from typing import Dict, List, Optional, Tuple # Sequence
+from typing import Dict #, List, Optional, Tuple,  Sequence
 #import numpy as np
 import pandas as pd
 from sqlalchemy import create_engine
 from sqlite3 import OperationalError
+from sklearn.multioutput import MultiOutputClassifier
 
 
 # Logging configuration
@@ -96,7 +98,7 @@ def fetch_data(directory):
 def detect_encoding(filename):
     """Detect encoding of the dataset (default: 'utf-8').
     
-    Args: None
+    Args: None.
     
     Returns:
         encoding (str): encoding as string
@@ -147,14 +149,16 @@ def load_validate_datasets(
     and validates them (checking their shape).
 
     Args:
-        data_path (str):
-            String of the local dataset path.
-            Default values: "./data/messages.csv", "./data/categories.csv".
+        data_messages_path (str):
+            String of the local messages dataset path.
+            Default value: "./data/messages.csv".
+        data_categories_path (str):
+            String of the local categories dataset path.
+            Default value: "./data/categories.csv".
     
     Returns
         messages (pd.DataFrame): Validated messages dataframe.
         categories (pd.DataFrame): Validated categories dataframe.
-
     """
     # Download datasets to local file directory
     # NOTE: fetch_data() is currently empty, the datasets are stored locally
@@ -198,7 +202,14 @@ def load_validate_datasets(
 
 def save_to_database(df,
                      database_filename="data/DisasterResponse.db"):
-    """..."""
+    """Save processed dataframe to the SQLite database.
+    
+    Args:
+        df (pd.DataFrame): processed dataframe.
+        database_filename (str): file name/path of the database.
+    
+    Returns: None.
+    """
     # Connect to SQLite database with SQLAlchemy
     engine = create_engine(f"sqlite:///{database_filename}")
     # Dump table, remove if it already exists
@@ -209,7 +220,21 @@ def load_validate_database_df(categorical_columns,
                               nlp_columns,
                               target_columns,
                               database_filename="data/DisasterResponse.db"):
-    """..."""
+    """Load dataframe from SQLite database
+    and validate it.
+    
+    Column names are passed for the validation;
+    they should be defined in teh config.yaml file.
+    
+    Args:
+        categorical_columns (list): list with the names of the categorical columns.
+        nlp_columns (list): list with the names of the text columns.
+        target_columns (list): list with the names of the target columns
+        database_filename (str): 
+    
+    Returns:
+        df (pd.DataFrame): loaded and validated dataframe.
+    """
     # Load dataset
     try:
         # Connect to database
@@ -238,50 +263,58 @@ def load_validate_database_df(categorical_columns,
         
     return df
 
-def save_model(model: RandomForestClassifier,
-               model_artifact: str = "./exported_artifacts/model.pickle") -> None:
+def save_model(model: MultiOutputClassifier,
+               model_artifact: str = "./models/classifier.pkl") -> None:
     """Persists the model object into a serialized pickle file.
-    Inputs
-    ------
-    model : RandomForestClassifier
-        The (trained) model.
-    model_artifact: str (default = "./exported_artifacts/model.pickle")
-        File path to persist the model.
-    Returns
-    -------
-    None
+    
+    Args:
+        model (MultiOutputClassifier):
+            The (trained) model, based on RandomForestClassifier
+        model_artifact (str):
+            File path to persist the model.
+    
+    Returns: None.
     """
     with open(model_artifact, 'wb') as f:
         # wb: write bytes
         pickle.dump(model, f)
         
-def save_evaluation_report():
-    pass
+def save_evaluation_report(report, evaluation_filepath):
+    """Persist evaluation report to file.
+    
+    Args:
+        report (list): list of report strings to write to file.
+        evaluation_filepath (str): filename of the evaluation report.
+
+    Returns: None."""
+    with open(evaluation_filepath, 'w') as f:
+        f.write('\n'.join(report))
 
 def load_validate_model(
-    model_artifact: str = "./exported_artifacts/model.pickle") -> RandomForestClassifier:
+    model_artifact: str = "./models/classifier.pkl") -> MultiOutputClassifier:
     """Loads and validates the (trained) model.
     Validation occurs by checking that the loaded
-    object type is RandomForestClassifier.
-    Inputs
-    ------
-    model_artifact : str
-        String of to the local model file path.
-    Returns
-    -------
-    model: RandomForestClassifier
-        Validated model.
+    object type is MultiOutputClassifier,
+    based on a RandomForestClassifier.
+    
+    Args:
+        model_artifact (str):
+            String of to the local model file path.
+    
+    Returns:
+        model (MultiOutputClassifier):
+            Validated model, based on a RandomForestClassifier.
     """
     try:
         with open(model_artifact, 'rb') as f: # 'exported_artifacts/model.pickle'
             model = pickle.load(f)
         # Check that the loaded model is a RandomForestClassifier to validate it
-        assert isinstance(model, RandomForestClassifier)
+        assert isinstance(model, MultiOutputClassifier)
     except FileNotFoundError as e:
         logger.error("Model artifact/pickle not found: %s.", model_artifact)
         raise e
     except AssertionError as e:
-        logger.error("Model artifact/pickle is not a RandomForestClassifier.")
+        logger.error("Model artifact/pickle is not a MultiOutputClassifier.")
         raise e
 
     return model
