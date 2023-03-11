@@ -12,7 +12,8 @@ Date: 2023-03-09
 """
 import os
 import logging
-import pickle
+#import joblib
+import skops.io as sio
 import yaml
 import chardet
 from pydantic import BaseModel, ValidationError
@@ -21,7 +22,8 @@ from typing import Dict #, List, Optional, Tuple,  Sequence
 import pandas as pd
 from sqlalchemy import create_engine
 from sqlite3 import OperationalError
-from sklearn.multioutput import MultiOutputClassifier
+#from sklearn.multioutput import MultiOutputClassifier
+from sklearn.pipeline import Pipeline
 
 
 # Logging configuration
@@ -68,7 +70,7 @@ class TrainingConfig(BaseModel):
     """
     hyperparameters: Dict
     cv: int
-    scoring: str
+    #scoring: str
 
 
 class GeneralConfig(BaseModel):
@@ -85,7 +87,7 @@ class GeneralConfig(BaseModel):
     model_filepath: str
     evaluation_filepath: str
     random_forest_parameters: ModelConfig
-    random_forest_grid_search: TrainingConfig
+    grid_search: TrainingConfig
 
 
 def fetch_data(directory):
@@ -230,7 +232,7 @@ def load_validate_database_df(categorical_columns,
         categorical_columns (list): list with the names of the categorical columns.
         nlp_columns (list): list with the names of the text columns.
         target_columns (list): list with the names of the target columns
-        database_filename (str): 
+        database_filename (str): filename of the database.
     
     Returns:
         df (pd.DataFrame): loaded and validated dataframe.
@@ -263,12 +265,12 @@ def load_validate_database_df(categorical_columns,
         
     return df
 
-def save_model(model: MultiOutputClassifier,
+def save_model(model: Pipeline,
                model_artifact: str = "./models/classifier.pkl") -> None:
     """Persists the model object into a serialized pickle file.
     
     Args:
-        model (MultiOutputClassifier):
+        model (Pipeline):
             The (trained) model, based on RandomForestClassifier
         model_artifact (str):
             File path to persist the model.
@@ -277,7 +279,7 @@ def save_model(model: MultiOutputClassifier,
     """
     with open(model_artifact, 'wb') as f:
         # wb: write bytes
-        pickle.dump(model, f)
+        sio.dump(model, f)
         
 def save_evaluation_report(report, evaluation_filepath):
     """Persist evaluation report to file.
@@ -291,10 +293,10 @@ def save_evaluation_report(report, evaluation_filepath):
         f.write('\n'.join(report))
 
 def load_validate_model(
-    model_artifact: str = "./models/classifier.pkl") -> MultiOutputClassifier:
+    model_artifact: str = "./models/classifier.pkl") -> Pipeline:
     """Loads and validates the (trained) model.
     Validation occurs by checking that the loaded
-    object type is MultiOutputClassifier,
+    object type is Pipeline,
     based on a RandomForestClassifier.
     
     Args:
@@ -302,19 +304,19 @@ def load_validate_model(
             String of to the local model file path.
     
     Returns:
-        model (MultiOutputClassifier):
+        model (Pipeline):
             Validated model, based on a RandomForestClassifier.
     """
     try:
-        with open(model_artifact, 'rb') as f: # 'exported_artifacts/model.pickle'
-            model = pickle.load(f)
+        with open(model_artifact, 'rb') as f: # 'models/classifier.pkl'
+            model = sio.load(f, trusted=True)
         # Check that the loaded model is a RandomForestClassifier to validate it
-        assert isinstance(model, MultiOutputClassifier)
+        assert isinstance(model, Pipeline)
     except FileNotFoundError as e:
         logger.error("Model artifact/pickle not found: %s.", model_artifact)
         raise e
     except AssertionError as e:
-        logger.error("Model artifact/pickle is not a MultiOutputClassifier.")
+        logger.error("Model artifact/pickle is not a Pipeline.")
         raise e
 
     return model

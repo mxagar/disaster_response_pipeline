@@ -25,11 +25,15 @@ dependencies:
       - autopep8
       - joblib
       - pytest
+      - plotly
       - setuptools
       - flake8
       - pylint
       - pydantic
       - sqlalchemy<2.0
+      - gunicorn
       - wheel
+      - dill
+      - skops
       - Flask-SQLAlchemy
       - Flask-Migrate

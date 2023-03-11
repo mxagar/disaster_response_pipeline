@@ -132,3 +132,4 @@ dmypy.json
 .vscode
 eda_fe_summary
 .DS_Store
+models/*.pkl

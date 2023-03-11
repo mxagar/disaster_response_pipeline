@@ -2,43 +2,35 @@ import json
 import plotly
 import pandas as pd
 
-from nltk.stem import WordNetLemmatizer
-from nltk.tokenize import word_tokenize
+#from nltk.stem import WordNetLemmatizer
+#from nltk.tokenize import word_tokenize
 
 from flask import Flask
 from flask import render_template, request, jsonify
 from plotly.graph_objs import Bar
-from sklearn.externals import joblib
+#from sklearn.externals import joblib
 from sqlalchemy import create_engine
 
+from disaster_response import load_validate_config, load_validate_model, DATABASE_TABLE_NAME
 
 app = Flask(__name__)
 
-def tokenize(text):
-    tokens = word_tokenize(text)
-    lemmatizer = WordNetLemmatizer()
+# Load config dictionary
+config = load_validate_config(config_filename="config.yaml")
 
-    clean_tokens = []
-    for tok in tokens:
-        clean_tok = lemmatizer.lemmatize(tok).lower().strip()
-        clean_tokens.append(clean_tok)
+# Load data
+engine = create_engine(f"sqlite:///{config['database_filepath']}")
+df = pd.read_sql_table(DATABASE_TABLE_NAME, engine)
 
-    return clean_tokens
+# Load model
+model = load_validate_model(model_artifact=config['model_filepath'])
 
-# load data
-engine = create_engine('sqlite:///../data/YourDatabaseName.db')
-df = pd.read_sql_table('YourTableName', engine)
-
-# load model
-model = joblib.load("../models/your_model_name.pkl")
-
-
-# index webpage displays cool visuals and receives user input text for model
+# Index webpage displays cool visuals and receives user input text for model
 @app.route('/')
 @app.route('/index')
 def index():
     
-    # extract data needed for visuals
+    # Extract data needed for visuals
     # TODO: Below is an example - modify to extract data for your own visuals
     genre_counts = df.groupby('genre').count()['message']
     genre_names = list(genre_counts.index)

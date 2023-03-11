@@ -1,7 +1,34 @@
+"""This module contains the training pipeline
+which outputs the ready inference pipeline along
+with an evaluation report to file.
+
+Before running this module, we need to run
+the ETL pipeline, which creates the processed dataset
+ready to feed to the model trained here.
+
+The used model is a RandomForestClassifier embedded in 
+a MultiOutputClassifier, because we have 36 possible
+targets.
+
+GridSearchCV is applied to optimize the hyperparameters.
+
+All settings are in config.yaml.
+
+Pylint: X
+
+To use this, run in a correct environment:
+
+    $ python train_classifier.py --config_filepath config.yaml
+
+Author: Mikel Sagardia
+Date: 2023-03-10
+"""
 #import sys
-import argparse
+#import re
+#import argparse
 #import numpy as np
-import pandas as pd
+#import pandas as pd
+#from string import punctuation
 
 import nltk
 nltk.download(['punkt', 'wordnet', 'averaged_perceptron_tagger'])
@@ -29,19 +56,31 @@ from .file_manager import (logger,
                            save_evaluation_report,
                            save_model)
 
-URL_REGEX = 'http[s]?://(?:[a-zA-Z]|[0-9]|[$-_@.&+]|[!*\(\),]|(?:%[0-9a-fA-F][0-9a-fA-F]))+'
-
-
-def load_data(categorical_columns,
+def load_XY(categorical_columns,
               nlp_columns,
               target_columns,
               database_filepath):
-    """..."""
+    """Load dataset to train model from SQLite database.
+    The auxiliary function load_validate_database_df()
+    from the file manager is used, which validates the dataframe.
+    The loaded dataframe is split into X (features) and Y (targets).
+    
+    Args:
+        categorical_columns (list): list with the names of the categorical columns.
+        nlp_columns (list): list with the names of the text columns.
+        target_columns (list): list with the names of the target columns
+        database_filename (str): filename of the database.
+    
+    Returns:
+        X (pd.DataFrame): dataframe with the features.
+        Y (pd.DataFrame): dataframe with the multiple targets.
+    """
     df = load_validate_database_df(categorical_columns,
                                    nlp_columns,
                                    target_columns,
                                    database_filename=database_filepath)
-    X = df[nlp_columns+categorical_columns]
+    #X = df[nlp_columns+categorical_columns]
+    X = df[nlp_columns]
     Y = df[target_columns]
     
     return X, Y
@@ -50,7 +89,7 @@ def load_data(categorical_columns,
 def tokenize(text):
     """Perform the NLP:
     
-    - Clean
+    - Clean: remove punctuation
     - Normalize (to lower)
     - Tokenize
     - Lemmatize
@@ -61,13 +100,15 @@ def tokenize(text):
     Returns:
         clean_tokens (list): list of processed lemmas
     """
-    detected_urls = re.findall(URL_REGEX, text)
-    for url in detected_urls:
-        text = text.replace(url, "urlplaceholder")
+    # Remove punctuation
+    punctuation = '!"#$%&\'()*+,-./:;<=>?@[\\]^_`{|}~'
+    text =  ''.join([c for c in text if c not in punctuation])
 
+    # Tokenize
     tokens = word_tokenize(text)
-    lemmatizer = WordNetLemmatizer()
 
+    # Lemmatize
+    lemmatizer = WordNetLemmatizer()
     clean_tokens = []
     for tok in tokens:
         clean_tok = lemmatizer.lemmatize(tok).lower().strip()
@@ -76,21 +117,39 @@ def tokenize(text):
     return clean_tokens
 
 
+# NOTE:
+# In order to be able to serialize an object (pickle)
+# we cannot use lambdas in it
+def squeeze(x):
+    return x.squeeze()
+
+
+def toarray(x):
+    return x.toarray()
+
+
 def build_model(config):
-    """..."""
+    """A multi-target classification model is generated
+    embedded in a Pipeline and a GridSearch.
+    
+    Args:
+        config (dict): dictionary with all config parameters
+            from config.yaml.
+    
+    Returns: None.
+    """
     categorical_transformer = Pipeline(steps=[
         ('imputer', SimpleImputer(strategy="most_frequent")),
         ('onehot', OneHotEncoder(sparse_output=False, drop="first", handle_unknown="ignore"))])
 
     # CountVectorizer and TfidfTransformer have some issues
     # with the size of the arrays, and they require some reshaping
-    # as done here with FunctionTransformer
+    # as done here with FunctionTransformer; lambdas cannot be serialized
     nlp_transformer = Pipeline([
-        #('reshape', FunctionTransformer(np.reshape, kw_args={"newshape": -1})),
-        ("squeeze", FunctionTransformer(lambda x: x.squeeze())),
+        ("squeeze", FunctionTransformer(squeeze)),
         ('vect', CountVectorizer(tokenizer=tokenize, token_pattern=None)),
         ('tfidf', TfidfTransformer()),
-        ("toarray", FunctionTransformer(lambda x: x.toarray())),
+        ("toarray", FunctionTransformer(toarray)),
     ])
 
     processor = ColumnTransformer(
@@ -106,18 +165,19 @@ def build_model(config):
     # thus, it will take much longer (xN)
     pipe = Pipeline(
         steps=[
-            ("processor", processor),
+            #("processor", processor),
+            ("processor", nlp_transformer),
             ("classifier", MultiOutputClassifier(
                 RandomForestClassifier(**config["random_forest_parameters"]))),
-            #("classifier", RandomForestClassifier(**config["random_forest_parameters"])),
         ]
     )
     
     param_grid = {
-    'classifier__estimator__n_estimators': config["grid_search"]["hyperparameters"]["n_estimators"], # 100, 200
-    'classifier__estimator__min_samples_split': config["grid_search"]["hyperparameters"]["min_samples_split"] # 2, 3
+        'classifier__estimator__n_estimators': config["grid_search"]["hyperparameters"]["n_estimators"], # 100, 200
+        'classifier__estimator__min_samples_split': config["grid_search"]["hyperparameters"]["min_samples_split"] # 2, 3
     }
     
+    # Define Grid Search
     grid = GridSearchCV(pipe,
                         param_grid=param_grid,
                         #scoring=config["grid_search"]["scoring"], # "f1"
@@ -127,7 +187,19 @@ def build_model(config):
 
 
 def evaluate_model(model, X_test, Y_test, category_names):
-    """..."""
+    """The trained model/pipeline is evaluated.
+    The results are printed and returned in a list of strings.
+    
+    Args:
+        model (GridSearchCV): trained inference pipeline.
+        X_test (pd.DataFrame): features of the test split.
+        Y_test (pd.DataFrame): targets of the test split.
+        category_names (list): names of the target columns.
+    
+    Returns:
+        report (list): list of strings that contain the evaluation
+            results.
+    """
     # Predict test split
     Y_pred = model.predict(X_test)
     
@@ -146,21 +218,57 @@ def evaluate_model(model, X_test, Y_test, category_names):
 
 
 def save_evaluation(report, evaluation_filepath):
-    """..."""
+    """Save evaluation report to file.
+    Wrapper function of the function
+    save_evaluation_report() in the file manager module.
+    
+    Args:
+        report (list): list of evaluation strings.
+        evaluation_filepath (str): file path to save the evaluation report.
+    Returns: None.
+    """
     save_evaluation_report(report, evaluation_filepath)
 
 
-def save_model(model, model_filepath):
-    """..."""
-    print(f"Saving best model: \n{model.best_estimator_}")
-    save_model(model.best_estimator_, model_filepath)
+def save_pipeline(model, model_filepath):
+    """Save inference artifact report to file.
+    Wrapper function of the function
+    save_model() in the file manager module.
+
+    Args:
+        model (GridSearchCV): trained inference pipeline.
+        model_filepath (str): file path to save the inference pipeline.
+
+    Returns: None.
+    """
+    save_model(model, model_filepath)
 
 
 def run_training(config_filepath,
                  database_filepath=None,
                  model_filepath=None,
                  evaluation_filepath=None):
-    """..."""
+    """Training pipeline, with the following steps:
+    
+    - Load preprocessed (ETL) dataset from database.
+    - Build an inference pipeline with a model embedded
+    in a GridSearchCV, and based on a RandomForestClassifier.
+    - Train the inference pipeline.
+    - Evaluate the trained pipeline with the test split.
+    - Save the inference artifact (model) and teh evaluation report.
+    
+    All the necessary parameters (e.g., paths, etc.) and in the
+    configuration file config.yaml. However, some filenames/paths
+    can be overwritten.
+    
+    Args:
+        config_filepath (str): configuration file path.
+        database_filepath (str): path to the database where the data is.
+        model_filepath (str): path where the inference artifact is saved.
+        evaluation_filepath (str): path where the evaluation report is saved.
+        
+    Returns: None.
+    """
     # Load configuration file
     config = load_validate_config(config_filepath)
 
@@ -173,7 +281,7 @@ def run_training(config_filepath,
         config["evaluation_filepath"] = evaluation_filepath
 
     print(f"Loading data from {config['database_filepath']}...")
-    X, Y = load_data(config["categorical_columns"],
+    X, Y = load_XY(config["categorical_columns"],
                      config["nlp_columns"],
                      config["target_columns"],
                      config["database_filepath"])
@@ -189,43 +297,15 @@ def run_training(config_filepath,
     
     print('Training model...')
     model_grid.fit(X_train, Y_train)
-    logger.info("Model trained.")
+    logger.info("Model trained; best model: %s", str(model_grid.best_params_))
     
     print('Evaluating model...')
     report = evaluate_model(model_grid, X_test, Y_test, config["target_columns"])
     save_evaluation(report, config["evaluation_filepath"])
     logger.info("Model evaluated and report saved to %s.", config['evaluation_filepath'])
 
-    print(f"Saving best model {config['model_filepath']}...")
-    save_model(model_grid.best_estimator_, config["model_filepath"])
+    print(f"Saving best model to {config['model_filepath']}...")
+    save_pipeline(model_grid.best_estimator_, config["model_filepath"])
     logger.info("Model trained and saved to %s.", config['model_filepath'])
 
     print('Model trained and saved!')
-
-
-if __name__ == '__main__':
-    # Define parser
-    parser = argparse.ArgumentParser(description="Training Pipeline")
-    parser.add_argument("config_filepath", type=str, required = True,
-                        help="File path of the configuration file.")
-    parser.add_argument("database_filepath", type=str, required = False, 
-                        help="File path of the ETL output database, used for training.")
-    parser.add_argument("model_filepath", type=str, required = False,
-                        help="File path of the inference artifact, product of the training pipeline.")
-    parser.add_argument("evaluation_filepath", type=str, required = False,
-                        help="File path of evaluation report.")
-    # Parse arguments
-    args = parser.parse_args()
-    
-    # Check the config file is there
-    try:
-        assert args.config_filepath
-    except AssertionError as err:
-        logger.error("Config file path not passed!")
-        raise err
-    
-    # Run Training pipeline
-    run_training(args.config_filepath,
-                 args.database_filepath,
-                 args.model_filepath,
-                 args.evaluation_filepath)

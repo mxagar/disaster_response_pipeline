@@ -1,0 +1,15 @@
+notebooks
+README.md
+assets
+build
+__pycache__
+.ipynb_checkpoints
+.DS_Store
+.vscode
+*.egg-info
+eda_fe_summary
+logs/*
+starter
+Dockerfile
+docker-compose.yaml
+run.sh

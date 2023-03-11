@@ -1,0 +1,17 @@
+version: '3.1'
+# Same as 
+#   docker run -p 3000:3000 -e PORT=3000 dissaster_response_app:latest
+# Run as
+#   docker-compose up -d
+# Check containers, logs
+#   docker-compose ps
+#   docker-compose logs
+# Stop containers
+#   docker-compose down
+services:
+  census_model_api:
+    image: dissaster_response_app:latest
+    ports:
+      - '3000:3000'
+    environment:
+      - 'PORT=3000'

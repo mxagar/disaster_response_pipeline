@@ -1,15 +1,23 @@
 """This module performs the ETL pipeline
 of the project, executing these steps:
 
-- A
-- B
+- Load the source datasets.
+- Clean and merge the datasets.
+- Save the processed dataset into a SQLite database.
 
-Pylint: 
+All settings are in config.yaml.
+
+Pylint: X
+
+To use this, run in a correct environment:
+
+    $ python process_data.py --config_filepath config.yaml
 
 Author: Mikel Sagardia
+Date: 2023-03-09
 """
 #import sys
-import argparse
+#import argparse
 #import numpy as np
 import pandas as pd
 
@@ -20,7 +28,15 @@ from .file_manager import (logger,
 
 
 def load_data(messages_filepath, categories_filepath):
-    """..."""
+    """Load source datasets, validate them and merge them.
+    
+    Args:
+        messages_filepath (str): file path of the messages dataset.
+        categories_filepath (str): file path of the categories dataset.
+        
+    Returns:
+        df (pd.DataFrame): dataframe with the merged datasets.
+    """
     # Load and validate datasets
     messages, categories = load_validate_datasets(messages_filepath,
                                                   categories_filepath)
@@ -35,7 +51,20 @@ def load_data(messages_filepath, categories_filepath):
     return df
 
 def clean_data(df, target_columns, nlp_columns):
-    """..."""
+    """Clean merged dataset:
+    
+    - Transform categories into booleans.
+    - Check that category values are correct.
+    - Drop duplicates and NaNs.
+    
+    Args:
+        df (pd.DataFrame): dataframe to be cleaned.
+        target_columns (list): target column names, categories.
+        nlp_columns (list): NLP/text column names.
+    
+    Returns:
+        df (pd.DataFrame): cleaned dataframe.
+    """
     # Create a dataframe of the 36 individual category columns
     categories = df.categories.str.split(pat=";", n=-1, expand=True)
     
@@ -78,14 +107,37 @@ def clean_data(df, target_columns, nlp_columns):
     return df
 
 def save_data(df, database_filename):
-    """..."""
+    """Save cleaned dataset to database.
+    This is a wrapper function to the function in
+    file_manager.py.
+    
+    Args:
+        df (pd.DataFrame): cleaned dataframe.
+        database_filename (str): database filename.
+        
+    Returns: None.
+    """
     save_to_database(df, database_filename)
 
 def run_etl(config_filepath,
             messages_filepath=None,
             categories_filepath=None,
             database_filepath=None):
-    """..."""
+    """Run ETL pipeline; this is the main function of the module,
+    which executes the following steps:
+    
+    - Load the source datasets.
+    - Clean and merge the datasets.
+    - Save the processed dataset into a SQLite database.
+    
+    Args:
+        config_filepath (str): configuration file path.
+        messages_filepath (str): file path of the dataset with the messages.
+        categories_filepath (str): file path of the dataset with the categories.
+        database_filepath (str): database filename/path.
+    
+    Returns: None.
+    """
     # Load configuration file
     config = load_validate_config(config_filepath)
 
@@ -110,36 +162,8 @@ def run_etl(config_filepath,
     logger.info("Datasets correctly cleaned.")
 
     # Load cleaned dataset to databse
-    print(f"Saving data to database {config['database_filepath']}"...)
+    print(f"Saving data to database {config['database_filepath']}")
     save_data(df, config['database_filepath'])
     logger.info("Cleaned and merged datasets correctly loaded to database.")
 
     print("ETL completed!")
-
-
-if __name__ == '__main__':
-    # Define parser
-    parser = argparse.ArgumentParser(description="ETL Pipeline")
-    parser.add_argument("config_filepath", type=str, required = True,
-                        help="File path of the configuration file.")
-    parser.add_argument("messages_filepath", type=str
-                        help="File path of the dataset with the messages.")
-    parser.add_argument("categories_filepath", type=str, required = False,
-                        help="File path of the dataset with the categories.")
-    parser.add_argument("database_filepath", type=str, required = False, 
-                        help="File path of the ETL output database.")
-    # Parse arguments
-    args = parser.parse_args()
-    
-    # Check the config file is there
-    try:
-        assert args.config_filepath
-    except AssertionError as err:
-        logger.error("Config file path not passed!")
-        raise err
-    
-    # Run ETL pipeline
-    run_etl(args.config_filepath,
-            args.messages_filepath,
-            args.categories_filepath,
-            args.database_filepath)
