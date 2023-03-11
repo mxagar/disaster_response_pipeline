@@ -75,6 +75,21 @@ def load_XY(categorical_columns,
         X (pd.DataFrame): dataframe with the features.
         Y (pd.DataFrame): dataframe with the multiple targets.
     """
+    """Load dataset to train model from SQLite database.
+    The auxiliary function load_validate_database_df()
+    from the file manager is used, which validates the dataframe.
+    The loaded dataframe is split into X (features) and Y (targets).
+    
+    Args:
+        categorical_columns (list): list with the names of the categorical columns.
+        nlp_columns (list): list with the names of the text columns.
+        target_columns (list): list with the names of the target columns
+        database_filename (str): filename of the database.
+    
+    Returns:
+        X (pd.DataFrame): dataframe with the features.
+        Y (pd.DataFrame): dataframe with the multiple targets.
+    """
     df = load_validate_database_df(categorical_columns,
                                    nlp_columns,
                                    target_columns,
@@ -108,6 +123,8 @@ def tokenize(text):
     tokens = word_tokenize(text)
 
     # Lemmatize
+
+    # Lemmatize
     lemmatizer = WordNetLemmatizer()
     clean_tokens = []
     for tok in tokens:
@@ -129,6 +146,15 @@ def toarray(x):
 
 
 def build_model(config):
+    """A multi-target classification model is generated
+    embedded in a Pipeline and a GridSearch.
+    
+    Args:
+        config (dict): dictionary with all config parameters
+            from config.yaml.
+    
+    Returns: None.
+    """
     """A multi-target classification model is generated
     embedded in a Pipeline and a GridSearch.
     
@@ -175,8 +201,11 @@ def build_model(config):
     param_grid = {
         'classifier__estimator__n_estimators': config["grid_search"]["hyperparameters"]["n_estimators"], # 100, 200
         'classifier__estimator__min_samples_split': config["grid_search"]["hyperparameters"]["min_samples_split"] # 2, 3
+        'classifier__estimator__n_estimators': config["grid_search"]["hyperparameters"]["n_estimators"], # 100, 200
+        'classifier__estimator__min_samples_split': config["grid_search"]["hyperparameters"]["min_samples_split"] # 2, 3
     }
     
+    # Define Grid Search
     # Define Grid Search
     grid = GridSearchCV(pipe,
                         param_grid=param_grid,
@@ -187,6 +216,19 @@ def build_model(config):
 
 
 def evaluate_model(model, X_test, Y_test, category_names):
+    """The trained model/pipeline is evaluated.
+    The results are printed and returned in a list of strings.
+    
+    Args:
+        model (GridSearchCV): trained inference pipeline.
+        X_test (pd.DataFrame): features of the test split.
+        Y_test (pd.DataFrame): targets of the test split.
+        category_names (list): names of the target columns.
+    
+    Returns:
+        report (list): list of strings that contain the evaluation
+            results.
+    """
     """The trained model/pipeline is evaluated.
     The results are printed and returned in a list of strings.
     
@@ -227,6 +269,15 @@ def save_evaluation(report, evaluation_filepath):
         evaluation_filepath (str): file path to save the evaluation report.
     Returns: None.
     """
+    """Save evaluation report to file.
+    Wrapper function of the function
+    save_evaluation_report() in the file manager module.
+    
+    Args:
+        report (list): list of evaluation strings.
+        evaluation_filepath (str): file path to save the evaluation report.
+    Returns: None.
+    """
     save_evaluation_report(report, evaluation_filepath)
 
 
@@ -248,6 +299,27 @@ def run_training(config_filepath,
                  database_filepath=None,
                  model_filepath=None,
                  evaluation_filepath=None):
+    """Training pipeline, with the following steps:
+    
+    - Load preprocessed (ETL) dataset from database.
+    - Build an inference pipeline with a model embedded
+    in a GridSearchCV, and based on a RandomForestClassifier.
+    - Train the inference pipeline.
+    - Evaluate the trained pipeline with the test split.
+    - Save the inference artifact (model) and teh evaluation report.
+    
+    All the necessary parameters (e.g., paths, etc.) and in the
+    configuration file config.yaml. However, some filenames/paths
+    can be overwritten.
+    
+    Args:
+        config_filepath (str): configuration file path.
+        database_filepath (str): path to the database where the data is.
+        model_filepath (str): path where the inference artifact is saved.
+        evaluation_filepath (str): path where the evaluation report is saved.
+        
+    Returns: None.
+    """
     """Training pipeline, with the following steps:
     
     - Load preprocessed (ETL) dataset from database.
