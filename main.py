@@ -1,3 +1,13 @@
+"""This module runs the ETL and training pipelines
+implemented in the disaster_response module.
+
+To use it, run
+
+    $ python main.py
+    
+Author: Mikel Sagardia
+Date: 2023-03-11
+"""
 import argparse
 import pandas as pd
 from sqlalchemy import create_engine
