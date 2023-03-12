@@ -34,6 +34,7 @@ dependencies:
       - gunicorn
       - wheel
       - dill
+      - "dvc[all]"
       - skops
       - Flask-SQLAlchemy
       - Flask-Migrate
