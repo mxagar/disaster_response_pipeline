@@ -33,7 +33,6 @@ dependencies:
       - sqlalchemy<2.0
       - gunicorn
       - wheel
-      - dill
       - "dvc[all]"
       - skops
       - Flask-SQLAlchemy
