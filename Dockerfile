@@ -59,9 +59,9 @@ CMD ["bash", "./run.sh"]
 # docker exec -it <id|name> sh
 #   docker exec -it disaster_response_app sh
 #   (we get inside)
-#   cd /opt/disaster_response
+#   cd /opt/disaster_response_pipeline
 #   ls
-#   cat logs/disaster_response_pipeline.log
+#   cat disaster_response_pipeline.log
 #   exit
 #
 # Stop container and remove it (erase all files in it, etc.)
