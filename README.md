@@ -185,19 +185,74 @@ Imbalanced dataset.
 
 [`run.sh`](./run.sh)
 
+```bash
+# Build the Dockerfile to create the image
+# docker build -t <image_name[:version]> <path/to/Dockerfile>
+docker build -t disaster_response_app:latest .
+ 
+# Check the image is there: watch the size (e.g., ~1GB)
+docker image ls
+
+# Run the container locally from a built image
+# Recall to: forward ports (-p) and pass PORT env variable (-e), because run.sh expects it!
+# Optional: 
+# -d to detach/get the shell back,
+# --name if we want to choose conatiner name (else, one randomly chosen)
+# --rm: automatically remove container after finishing (irrelevant in our case, but...)
+docker run -d --rm -p 3000:3000 -e PORT=3000 --name disaster_response_app disaster_response_app:latest
+
+# Check the API locally: open the browser
+#   WAIT 30 seconds...
+#   http://localhost:3000
+#   Use the web app
+ 
+# Check the running containers: check the name/id of our container,
+# e.g., census_model_app
+docker container ls
+docker ps
+
+# Get a terminal into the container: in general, BAD practice
+# docker exec -it <id|name> sh
+docker exec -it disaster_response_app sh
+# (we get inside)
+cd /opt/disaster_response_pipeline
+ls
+cat disaster_response_pipeline.log
+exit
+
+# Stop container and remove it (erase all files in it, etc.)
+# docker stop <id/name>
+# docker rm <id/name>
+docker stop disaster_response_app
+docker rm disaster_response_app
+```
+
+```bash
+# Run contaner(s), detached; local docker-compose.yaml is used
+docker-compose up -d
+
+# Check containers, logs
+docker-compose ps
+docker-compose logs
+
+# Stop containers
+docker-compose down
+```
+
 ### Summary of Contents
 
 - [x] ETL Pipeline in which datasets are merged and loaded to a SQLite database.
 - [x] ML Pipeline which applies NLP to extract text features and train a random forest classifier.
 - [x] Flask Web App
 - [x] Tests
-- [x] Deployment to Heroku using Continuous Integration and Continuous Delivery (CI/CD).
+- [x] Continuous Integration with Github Actions.
 - [x] Containerization (Docker)
 
 ## Next Steps, Improvements
 
 - [x] Add logging.
 - [x] Lint with `flake8` and `pylint`.
+- [ ] Deploy it, e.g., to Heroku or AWS; other projects I have deployed in that way: []()
 - [ ] Extend tests; currently, the test package contains very few tests that serve as blueprint for further implementations.
 - [ ] Add type hints to `process_data.py` and `train_classifier.py`; currently type hints and `pydantic` are used only in `file_manager.py` to clearly define loading and persistence functionalities and to validate the objects they handle.
 - [ ] Add more visualizations.
