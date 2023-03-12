@@ -27,7 +27,7 @@ I took the [`starter`](starter) code for this project from the [Udacity Data Sci
       - [Notes on the Model Evaluation](#notes-on-the-model-evaluation)
     - [Flask Web App](#flask-web-app)
     - [Tests](#tests)
-    - [Deployment to Heroku](#deployment-to-heroku)
+    - [Continuous Integration with Github Actions](#continuous-integration-with-github-actions)
     - [Docker Container](#docker-container)
     - [Summary of Contents](#summary-of-contents)
   - [Next Steps, Improvements](#next-steps-improvements)
@@ -54,7 +54,6 @@ The directory of the project consists of the following files:
 ├── assets/
 ├── data
 │   ├── DisasterResponse.db
-│   ├── Twitter-sentiment-self-drive-DFE.csv
 │   ├── categories.csv
 │   └── messages.csv
 ├── disaster_response
@@ -63,25 +62,21 @@ The directory of the project consists of the following files:
 │   ├── process_data.py
 │   └── train_classifier.py
 ├── models/
-├── logs
-│   └── disaster_response_pipeline.log
+├── disaster_response_pipeline.log
 ├── notebooks
 │   ├── ETL_Pipeline_Preparation.ipynb
 │   └── ML_Pipeline_Preparation.ipynb
 ├── config.yaml
-├── requirements.txt
 ├── conda.yaml
+├── requirements.txt
 ├── Dockerfile
 ├── docker-compose.yaml
 ├── run.sh
-├── Procfile
-├── runtime.txt
 ├── setup.py
 ├── starter/
 └── tests
     ├── __init__.py
     ├── conftest.py
-    ├── test_app.py
     └── test_library.py
 ```
 
@@ -164,16 +159,9 @@ Imbalanced dataset.
 
 [`tests/test_app.py`](./tests/test_app.py)
 
+### Continuous Integration with Github Actions
 
-### Deployment to Heroku
 
-[`Procfile`](./Procfile)
-
-[`.slugignore`](.slugignore)
-
-[`runtime.txt`](runtime.txt)
-
-[`requirements.txt`](./requirements.txt)
 
 ### Docker Container
 
@@ -252,7 +240,7 @@ docker-compose down
 
 - [x] Add logging.
 - [x] Lint with `flake8` and `pylint`.
-- [ ] Deploy it, e.g., to Heroku or AWS; other projects I have deployed in that way: []()
+- [ ] Deploy it, e.g., to Heroku or AWS; another example project in which I have deployed the app that way: [census_model_deployment_fastapi](https://github.com/mxagar/census_model_deployment_fastapi).
 - [ ] Extend tests; currently, the test package contains very few tests that serve as blueprint for further implementations.
 - [ ] Add type hints to `process_data.py` and `train_classifier.py`; currently type hints and `pydantic` are used only in `file_manager.py` to clearly define loading and persistence functionalities and to validate the objects they handle.
 - [ ] Add more visualizations.
