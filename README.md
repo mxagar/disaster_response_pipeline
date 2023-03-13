@@ -33,7 +33,6 @@ I took the [`starter`](starter) code for this project from the [Udacity Data Sci
     - [The `disaster_response` Package](#the-disaster_response-package)
       - [ETL Pipeline](#etl-pipeline)
       - [Machine Learning Training Pipeline](#machine-learning-training-pipeline)
-        - [Notes on the Model Evaluation](#notes-on-the-model-evaluation)
     - [Flask Web App](#flask-web-app)
     - [Tests](#tests)
     - [Continuous Integration with Github Actions](#continuous-integration-with-github-actions)
@@ -189,17 +188,35 @@ For more information on how to interact with relational/SQL databases using pyth
 
 #### Machine Learning Training Pipeline
 
-[`distaster_response/train_classifier.py`](./distaster_response/train_classifier.py)
+The ML training pipeline implemented in [`train_classifier.py`](./distaster_response/train_classifier.py) loads the dataset from `DisasterResponse.db` and fits a `RandomForestClassifier` using `GridSearchCV`. Since we have multiple targets, the random forest is wrapped with a `MultiOutputClassifier`; as stated in the [Scikit-Learn documentation](https://scikit-learn.org/stable/modules/generated/sklearn.multioutput.MultiOutputClassifier.html), 
 
-[`models`](models)
+> The strategy [of a `MultiOutputClassifier`] consists in fitting one classifier per target.
 
-##### Notes on the Model Evaluation
+Thus, the training might extend some hours, specially because we perform cross-validation and hyperparameter tuning. The final output is composed by two files placed in the folder [`models`](models):
 
-Imbalanced dataset.
+- `classifier.pkl`: trained classifier, serialized as a pickle.
+- `evaluation_report.txt`: evaluation metrics of the trained classifier; for each target a classification report is provided (with F1 metrics).
+
+The `classifier.pkl` contains not only the model, but also the data processing pipeline that transforms the features and the targets to train the model. More details on that can be found in the associated function `build_model()` from [`train_classifier.py`](./distaster_response/train_classifier.py).
+
+:construction: Notes:
+
+- The focus of the project doesn't lie at this stage on optimizing the model, but instead, on creating an MVP of the app; future revisions should improve the model performance.
+- The message category distribution (i.e., the target counts) is very imbalanced, as shown in the next figure (and future work should address that, too):
+
+<p style="text-align:center">
+  <img src="./assets/targets_distribution.png" alt="Message category distribution (targets)." width=400>
+</p>
+
 
 ### Flask Web App
 
-[`app/run.py`](./app/run.py)
+The [Flask](https://flask.palletsprojects.com/en/2.2.x/) web app is implemented in [`app/run.py`](./app/run.py). It consists of two routes that render one page each:
+
+- The index/default page visualizes 3 plots of the data with [Plotly](https://plotly.com/); it also offers an input box for the user to insert a message to be classified.
+- The classification page appears when the user hits the "classify" button and the model predicts the categories.
+
+More information on how to create Flask dashboards with Plotly: [data_science_udacity](https://github.com/mxagar/data_science_udacity/blob/main/02_SoftwareEngineering/DSND_SWEngineering.md#6-web-development).
 
 ### Tests
 
@@ -293,7 +310,9 @@ Note: in order to keep image size in line, [`.dockerignore`](.dockerignore) list
 - [ ] Deploy it, e.g., to Heroku or AWS; another example project in which I have deployed the app that way: [census_model_deployment_fastapi](https://github.com/mxagar/census_model_deployment_fastapi).
 - [ ] Extend tests; currently, the test package contains very few tests that serve as blueprint for further implementations.
 - [ ] Add type hints to `process_data.py` and `train_classifier.py`; currently type hints and `pydantic` are used only in `file_manager.py` to clearly define loading and persistence functionalities and to validate the objects they handle.
-- [ ] Optimize properly the machine learning model: try with alternative models, perform a through hyperparameter tuning (e.g., with [Optuna](https://optuna.org)), etc.
+- [ ] Optimize properly the machine learning model, improving its performance: 
+  - [ ] Try alternative models.
+  - [ ] Perform a through hyperparameter tuning (e.g., with [Optuna](https://optuna.org)).
 - [ ] Address the imbalanced nature of the dataset.
 - [ ] Add more visualizations to the web app.
 - [ ] Based on the detected categories, suggest organizations to connect to.
@@ -301,11 +320,7 @@ Note: in order to keep image size in line, [`.dockerignore`](.dockerignore) list
 
 ## References and Links
 
-- A
-- B
-- C
-- Link
-- Link
+
 
 ## Authorship
 
