@@ -5,19 +5,19 @@ In other words, the module is a data manager for all structures
 used in the library, and acts also
 as a persistence/loading manager.
 
-Pylint: X.
+Pylint: 7.45/10.
 
 Author: Mikel Sagardia
 Date: 2023-03-09
 """
 import os
 import logging
+from typing import Dict #, List, Optional, Tuple,  Sequence
+import yaml
 #import joblib
 import skops.io as sio
-import yaml
 import chardet
 from pydantic import BaseModel, ValidationError
-from typing import Dict #, List, Optional, Tuple,  Sequence
 #import numpy as np
 import pandas as pd
 from sqlalchemy import create_engine
@@ -191,14 +191,14 @@ def load_validate_datasets(
         assert messages.shape[1] == 4
     except AssertionError as e:
         logger.error("Unexpected shape of dataset messages: %s.", str(messages.shape))
-        raise e        
+        raise e
 
     try:
         assert categories.shape[0] > 10
         assert categories.shape[1] == 2
     except AssertionError as e:
         logger.error("Unexpected shape of dataset categories: %s.", str(categories.shape))
-        raise e        
+        raise e
 
     return messages, categories
 
@@ -254,8 +254,8 @@ def load_validate_database_df(categorical_columns,
         assert df.shape[1] == 40
     except AssertionError as e:
         logger.error("Unexpected shape of dataset messages: %s.", str(df.shape))
-        raise e  
-    
+        raise e
+
     all_processed_cols = categorical_columns + nlp_columns + target_columns
     for col in all_processed_cols:
         try:
@@ -263,7 +263,7 @@ def load_validate_database_df(categorical_columns,
         except AssertionError as e:
             logger.error("Expected column not found: %s.", col)
             raise e
-        
+
     return df
 
 def save_model(model: Pipeline,
@@ -281,7 +281,7 @@ def save_model(model: Pipeline,
     with open(model_artifact, 'wb') as f:
         # wb: write bytes
         sio.dump(model, f)
-        
+
 def save_evaluation_report(report, evaluation_filepath):
     """Persist evaluation report to file.
     
@@ -321,4 +321,3 @@ def load_validate_model(
         raise e
 
     return model
-
