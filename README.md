@@ -136,10 +136,10 @@ Note that both [`conda.yaml`](./conda.yaml) and [`requirements.txt`](./requireme
 
 The dataset is contained in the folder [`data`](data), and it consists of the following files:
 
-- `messages.csv`
-- `categories.csv`
+- `messages.csv`: a CSV of shape `(26248, 4)`, which contains the help messages (in original and translated form) as well as information on the source.
+- `categories.csv`: a CSV of shape `(26248, 2)` which matches each message id from `messages.csv` with 36 categories, related to the type of disaster message. All categories are in text from in one column. All those target categories are listed in [`config.yaml`](config.yaml).
 
-After running the [ETL pipeline](#etl-pipeline), the SQLite database `DisasterResponse.db` is created, which contains a clean merge of the aforementioned files.
+The [`notebooks`](notebooks) provide a good first exposure to the contents of the datasets. After running the [ETL pipeline](#etl-pipeline), the SQLite database `DisasterResponse.db` is created, which contains a clean merge of the aforementioned files.
 
 ## Notes on the Implementation
 
@@ -147,15 +147,26 @@ In the following subsections, information on different aspects of the implementa
 
 ### The `disaster_response` Package
 
+The Machine Learning (ML) functionalities are implemented in this package, which can be used as shown in [`main.py`](./main.py). The package consists of the following files:
 
+- [`file_manager.py`](./distaster_response/file_manager.py): loading, validation and persistence manager.
+- [`process_data.py`](./distaster_response/process_data.py): ETL pipeline.
+- [`train_classifier.py`](./distaster_response/train_classifier.py): ML/training pipeline.
+
+Having a file loading/validation/persistence manager makes the other modules more clear, abstracts the access to 3rd party modules and improves maintainability.
 
 #### ETL Pipeline
 
-[`distaster_response/process_data.py`](./distaster_response/process_data.py)
+The ETL (Extract, Transform, Load) pipeline implemented in [`process_data.py`](./distaster_response/process_data.py) performs the following tasks:
 
-[`data`](data)
+- Load the source CSV datasets from [`data`](data).
+- Clean and merge the datasets:
+  - Transform categories into booleans.
+  - Check that category values are correct.
+  - Drop duplicates and NaNs.
+- Save the processed dataset into a SQLite database to `DisasterResponse.db` (or the filename defined in `config.yaml`).
 
-We can interact using SQL with the SQLite database `DisasterResponse.db` produced by the ETL pipeline vis CLI if we install [`sqlite3`](https://www.tutorialspoint.com/sqlite/sqlite_installation.htm):
+We can interact using SQL with the SQLite database `DisasterResponse.db` produced by the ETL pipeline via CLI if we install [`sqlite3`](https://www.tutorialspoint.com/sqlite/sqlite_installation.htm):
 
 ```bash
 cd data
