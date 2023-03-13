@@ -1,15 +1,23 @@
 # Disaster Response Pipeline
 
-This repository contains a Machine Learning (ML) pipeline which predicts the response to messages in disaster situations. An ETL pipeline is also developed and the project is deployed to Heroku using a web app based on Flask; the final version is available under the following link (it might take some time to awaken the app the first time):
+This repository contains a Machine Learning (ML) pipeline which predicts message categories in disaster situations. It is precisely during disaster situations, that the response organizations have the least capacity to evaluate and react properly to each message that arrives to them (via direct contact, social media, etc.). In this project, NLP is applied and a classification model is trained so that the category of each message can be predicted automatically; then, the messages can be directed to the appropriate relief agencies. In total 36 message categories are predicted, which are related to the type of possible emergency, e.g., `earthquake`, `fire`, `missing_people`, etc.
 
-LINK
+All in all, the following methods/techniques are implemented and documented:
 
-It is precisely during disaster situations, that the response organizations have the least capacity to evaluate and react properly to each message that arrives to them (via direct contact, social media, etc.). In this project, NLP is applied and a classification model trained so that the category of each message can be predicted automatically; then, the messages can be directed to the appropriate relief agencies.
+- [x] An ETL pipeline (Extract, Transform, Load).
+- [x] A Machine Learning pipeline which applies NLP to messages and predicts message categories.
+- [x] Testing (Pytest) and linting.
+- [x] Error checks, data validation with Pydantic and exception handling.
+- [x] Logging.
+- [x] Continuous Integration with Github Actions.
+- [x] Python packaging.
+- [x] Containerization (Docker).
+- [x] Flask web app, deployed locally.
 
-The project is embedded in a Flask web app which visualizes the dataset and facilitates the usage of the classifier with a GUI:
+The Flask web app enables interaction, i.e., the user inputs a text message and the trained classifier predicts candidate categories:
 
 <p style="text-align:center">
-  <img src="./assets/disaster_response_app.png" alt="A snapshot of the disaster response app." width=1000px>
+  <img src="./assets/snapshot_prediction.jpg" alt="A snapshot of the disaster response app." width=1000px>
 </p>
 
 I took the [`starter`](starter) code for this project from the [Udacity Data Scientist Nanodegree](https://www.udacity.com/course/data-scientist-nanodegree--nd025) and modified it to the present form, which deviates significantly from the original version.
@@ -18,25 +26,21 @@ I took the [`starter`](starter) code for this project from the [Udacity Data Sci
 
 - [Disaster Response Pipeline](#disaster-response-pipeline)
   - [Table of Contents](#table-of-contents)
-  - [Dataset](#dataset)
   - [How to Use This Project](#how-to-use-this-project)
     - [Installing Dependencies for Custom Environments](#installing-dependencies-for-custom-environments)
+  - [Dataset](#dataset)
   - [Notes on the Implementation](#notes-on-the-implementation)
-    - [ETL Pipeline](#etl-pipeline)
-    - [Machine Learning Training Pipeline](#machine-learning-training-pipeline)
-      - [Notes on the Model Evaluation](#notes-on-the-model-evaluation)
+    - [The `disaster_response` Package](#the-disaster_response-package)
+      - [ETL Pipeline](#etl-pipeline)
+      - [Machine Learning Training Pipeline](#machine-learning-training-pipeline)
+        - [Notes on the Model Evaluation](#notes-on-the-model-evaluation)
     - [Flask Web App](#flask-web-app)
     - [Tests](#tests)
     - [Continuous Integration with Github Actions](#continuous-integration-with-github-actions)
     - [Docker Container](#docker-container)
-    - [Summary of Contents](#summary-of-contents)
   - [Next Steps, Improvements](#next-steps-improvements)
   - [References and Links](#references-and-links)
   - [Authorship](#authorship)
-
-## Dataset
-
-[`data`](data)
 
 ## How to Use This Project
 
@@ -45,80 +49,113 @@ The directory of the project consists of the following files:
 ```
 .
 ├── Instructions.md                             # Original challenge/project instructions
-├── README.md
-├── app
-│   ├── run.py
-│   └── templates
+├── README.md                                   # This file
+├── app                                         # Web app
+│   ├── run.py                                  # Implementation of the Flask app
+│   └── templates                               # Web app HTML/CSS templates
 │       ├── go.html
 │       └── master.html
-├── assets/
-├── data
-│   ├── DisasterResponse.db
-│   ├── categories.csv
-│   └── messages.csv
-├── disaster_response
+├── assets/                                     # Images, etc.
+├── data                                        # Datasets
+│   ├── DisasterResponse.db                     # Generated database
+│   ├── categories.csv                          # Catagories dataset
+│   └── messages.csv                            # Messages dataset
+├── disaster_response                           # Package
 │   ├── __init__.py
-│   ├── file_manager.py
-│   ├── process_data.py
-│   └── train_classifier.py
-├── models/
-├── disaster_response_pipeline.log
-├── notebooks
+│   ├── file_manager.py                         # General structures, loading/persistence manager
+│   ├── process_data.py                         # ETL pipeline
+│   └── train_classifier.py                     # ML pipeline and training
+├── main.py                                     # Script which runs both pipelines: ETL and ML (training)
+├── models                                      # Inference and evaluation artifacts
+│   ├── classifier.pkl                          # Trained pipeline (not committed)
+│   └── evaluation_report.txt                   # Evaluation metrics: F1, etc.
+├── disaster_response_pipeline.log              # Logs
+├── notebooks                                   # Research notebooks
 │   ├── ETL_Pipeline_Preparation.ipynb
 │   └── ML_Pipeline_Preparation.ipynb
-├── config.yaml
-├── conda.yaml
-├── requirements.txt
-├── Dockerfile
-├── docker-compose.yaml
-├── run.sh
-├── setup.py
-├── starter/
-└── tests
+├── config.yaml                                 # Configuration file
+├── conda.yaml                                  # Conda environment
+├── requirements.txt                            # Dependencies for pip
+├── Dockerfile                                  # Docker image definition
+├── docker-compose.yaml                         # Docker compose YAML
+├── run.sh                                      # Execution script for Docker
+├── setup.py                                    # Package setup
+├── starter/                                    # Original starter material
+└── tests                                       # Tests
     ├── __init__.py
-    ├── conftest.py
-    └── test_library.py
+    ├── conftest.py                             # Pytest configuration, fixtures, etc.
+    └── test_library.py                         # disaster_response package tests
 ```
 
-You can run the notebook at leas in two ways:
+To run the pipelines and the web app, first the dependencies need to be installed, as explained in the [next section](#installing-dependencies-for-custom-environments). Then, we can execute the following commands:
 
-1. In a custom environment, e.g., locally or on a container. To that end, you can create a [conda](https://docs.conda.io/en/latest/) environment and install the [dependencies](#installing-dependencies-for-custom-environments) as explained below.
-2. In Google Colab. For that, simply click on the following link:
+```bash
+# This runs the the ETL pipeline, which creates the DisasterResponse.db database
+# It also runs the ML pipeline, which trains the models and outputs classifier.pkl
+# WARNING: The training might take some hours, because hyperparameter search
+# with cross-validation is performed.
+python main.py
 
-[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/mxagar/airbnb_data_analysis/blob/master/00_AirBnB_DataAnalysis_Initial_Tests.ipynb)
+# Spin up the web app
+# Wait 10 seconds and open http://localhost:3000
+# We see some visualizations there; if we enter a message,
+# we should get the predicted categories.
+python app/run.py
+```
 
+Notes: 
+
+- [`main.py`](./../main.py) uses [`config.yaml`](`./../config.yaml`); that configuration file defines all necessary parameters for both pipelines (ETL and ML training). However, some parameters can be overridden via CLi arguments &mdash; try `python main.py --help` for more information.
+- :warning: The training might take some hours, because hyperparameter search with cross-validation is performed.
+- The outputs from executing both pipelines are the following:
+  - `DisasterResponse.db`: cleaned and merged SQLite database, product of the ETL process.
+  - `classifier.pkl`: trained classifier, used by the web app.
+  - `evaluation_report.txt`: evaluation metrics of the trained classifier.
 
 ### Installing Dependencies for Custom Environments
 
-If you'd like to control where the notebook runs, you need to create a custom environment and install the required dependencies. A quick recipe which sets everything up with [conda](https://docs.conda.io/en/latest/) is the following:
+You can create an environment with [conda](https://docs.conda.io/en/latest/) and install the dependencies with the following recipe:
 
 ```bash
 # Create environment with YAML, incl. packages
 conda env create -f conda.yaml
 conda activate dis-res
+pip install . # install the disaster_response package
 
 # Alternatively, if you prefer, create your own environment
 # and install the dependencies with pip
 conda create --name dis-res pip
 conda activate dis-res
 pip install -r requirements.txt
-
-# To track any changes and versions you have
-conda env export > conda_.yaml
-pip list --format=freeze > requirements.txt
+pip install . # install the disaster_response package
 ```
 
-[`conda.yaml`](./conda.yaml)
+Note that both [`conda.yaml`](./conda.yaml) and [`requirements.txt`](./requirements.txt) contain the same packages; however, [`requirements.txt`](./requirements.txt) has the specific package versions I have used with Python `3.9.16`.
 
-[`requirements.txt`](./requirements.txt)
+## Dataset
+
+The dataset is contained in the folder [`data`](data), and it consists of the following files:
+
+- `messages.csv`
+- `categories.csv`
+
+After running the [ETL pipeline](#etl-pipeline), the SQLite database `DisasterResponse.db` is created, which contains a clean merge of the aforementioned files.
 
 ## Notes on the Implementation
 
-### ETL Pipeline
+In the following subsections, information on different aspects of the implementation is provided.
+
+### The `disaster_response` Package
+
+
+
+#### ETL Pipeline
 
 [`distaster_response/process_data.py`](./distaster_response/process_data.py)
 
 [`data`](data)
+
+We can interact using SQL with the SQLite database `DisasterResponse.db` produced by the ETL pipeline vis CLI if we install [`sqlite3`](https://www.tutorialspoint.com/sqlite/sqlite_installation.htm):
 
 ```bash
 cd data
@@ -127,7 +164,7 @@ sqlite3
 # Open a DB
 .open DisasterResponse.db
 # Show tables
-.tables # Student
+.tables # Message
 # Get table info/columns & types
 PRAGMA table_info(Message);
 # Get first 5 entries
@@ -137,13 +174,15 @@ SELECT * FROM Message LIMIT 5;
 .quit
 ```
 
-### Machine Learning Training Pipeline
+For more information on how to interact with relational/SQL databases using python visit my [sql_guide](https://github.com/mxagar/sql_guide).
+
+#### Machine Learning Training Pipeline
 
 [`distaster_response/train_classifier.py`](./distaster_response/train_classifier.py)
 
 [`models`](models)
 
-#### Notes on the Model Evaluation
+##### Notes on the Model Evaluation
 
 Imbalanced dataset.
 
@@ -153,25 +192,30 @@ Imbalanced dataset.
 
 ### Tests
 
-[`tests/conftest.py`](./tests/conftest.py)
+Once we have [Pytest](https://docs.pytest.org/en/7.2.x/) installed, we can run the tests as follows:
 
-[`tests/test_library.py`](./tests/test_library.py)
+```bash
+pytest tests
+```
 
-[`tests/test_app.py`](./tests/test_app.py)
+The [`tests`](./tests) folder contains these two files:
+
+- [`tests/conftest.py`](./tests/conftest.py): configuration and fixtures definition.
+- [`tests/test_library.py`](./tests/test_library.py): tests of functions defined in the `disaster_response` package.
+
+:construction: Currently, very few and shallow tests are implemented; even though the loading/persistence module [`file_manager.py`](./disaster_response/file_manager.py) validates many objects with [pydantic](https://docs.pydantic.dev/) and error-detection checks, the tests should be extended.
 
 ### Continuous Integration with Github Actions
 
+I have implemented Continuous Integration (CI) using Github Actions. The workflow file [`python-app.yml`](.github/workflows/python-app.yml) performs the following tasks every time we push changes to the `main` branch:
 
+- Requirements are installed.
+- `flake8` is run to lint the code; note that [`.flake8`](.flake8) contains the files/folders to be ignored.
+- Tests are run as explained above: `pytest tests`.
 
 ### Docker Container
 
-[`Dockerfile`](./Dockerfile)
-
-[`.dockerignore`](.dockerignore)
-
-[`docker-compose.yaml`](./docker-compose.yaml)
-
-[`run.sh`](./run.sh)
+Containerization is a common step before deploying/shipping an application. Thanks to the simple [`Dockerfile`](./Dockerfile) in the repository, we can create an image of the web app and run it as a container as follows:
 
 ```bash
 # Build the Dockerfile to create the image
@@ -215,6 +259,8 @@ docker stop disaster_response_app
 docker rm disaster_response_app
 ```
 
+Alternatively, I have written a [`docker-compose.yaml`](./docker-compose.yaml) YAML which spins up the one-container service with the required parameters:
+
 ```bash
 # Run contaner(s), detached; local docker-compose.yaml is used
 docker-compose up -d
@@ -227,14 +273,7 @@ docker-compose logs
 docker-compose down
 ```
 
-### Summary of Contents
-
-- [x] ETL Pipeline in which datasets are merged and loaded to a SQLite database.
-- [x] ML Pipeline which applies NLP to extract text features and train a random forest classifier.
-- [x] Flask Web App
-- [x] Tests
-- [x] Continuous Integration with Github Actions.
-- [x] Containerization (Docker)
+Note: in order to keep image size in line, [`.dockerignore`](.dockerignore) lists all files that can be avoided, similarly as `.gitignore`.
 
 ## Next Steps, Improvements
 
@@ -243,10 +282,11 @@ docker-compose down
 - [ ] Deploy it, e.g., to Heroku or AWS; another example project in which I have deployed the app that way: [census_model_deployment_fastapi](https://github.com/mxagar/census_model_deployment_fastapi).
 - [ ] Extend tests; currently, the test package contains very few tests that serve as blueprint for further implementations.
 - [ ] Add type hints to `process_data.py` and `train_classifier.py`; currently type hints and `pydantic` are used only in `file_manager.py` to clearly define loading and persistence functionalities and to validate the objects they handle.
-- [ ] Add more visualizations.
+- [ ] Optimize properly the machine learning model: try with alternative models, perform a through hyperparameter tuning (e.g., with [Optuna](https://optuna.org)), etc.
+- [ ] Address the imbalanced nature of the dataset.
+- [ ] Add more visualizations to the web app.
 - [ ] Based on the detected categories, suggest organizations to connect to.
 - [ ] Improve the front-end design.
-- [ ] Address the imbalanced nature of the dataset.
 
 ## References and Links
 
