@@ -14,7 +14,7 @@ GridSearchCV is applied to optimize the hyperparameters.
 
 All settings are in config.yaml.
 
-Pylint: X
+Pylint: 7.25/10.
 
 To use this, run in a correct environment:
 
@@ -30,25 +30,24 @@ Date: 2023-03-10
 #import pandas as pd
 #from string import punctuation
 
-import nltk
-nltk.download(['punkt', 'wordnet', 'averaged_perceptron_tagger'])
-
-from nltk.tokenize import word_tokenize
-from nltk.stem import WordNetLemmatizer
-
-from sklearn.model_selection import train_test_split
-from sklearn.impute import SimpleImputer
-from sklearn.preprocessing import OneHotEncoder
+#from sklearn.impute import SimpleImputer
+#from sklearn.preprocessing import OneHotEncoder
+#from sklearn.compose import ColumnTransformer
 from sklearn.preprocessing import FunctionTransformer
-from sklearn.compose import ColumnTransformer
 from sklearn.model_selection import GridSearchCV
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.multioutput import MultiOutputClassifier
 from sklearn.model_selection import train_test_split
 from sklearn.feature_extraction.text import CountVectorizer, TfidfTransformer
-from sklearn.metrics import classification_report #, confusion_matrix, precision_recall_fscore_support
+from sklearn.metrics import classification_report
 from sklearn.pipeline import Pipeline #, FeatureUnion
 #from sklearn.base import BaseEstimator, TransformerMixin
+
+import nltk
+nltk.download(['punkt', 'wordnet', 'averaged_perceptron_tagger'])
+
+from nltk.tokenize import word_tokenize
+from nltk.stem import WordNetLemmatizer
 
 from .file_manager import (logger,
                            load_validate_config,
@@ -75,21 +74,6 @@ def load_XY(categorical_columns,
         X (pd.DataFrame): dataframe with the features.
         Y (pd.DataFrame): dataframe with the multiple targets.
     """
-    """Load dataset to train model from SQLite database.
-    The auxiliary function load_validate_database_df()
-    from the file manager is used, which validates the dataframe.
-    The loaded dataframe is split into X (features) and Y (targets).
-    
-    Args:
-        categorical_columns (list): list with the names of the categorical columns.
-        nlp_columns (list): list with the names of the text columns.
-        target_columns (list): list with the names of the target columns
-        database_filename (str): filename of the database.
-    
-    Returns:
-        X (pd.DataFrame): dataframe with the features.
-        Y (pd.DataFrame): dataframe with the multiple targets.
-    """
     df = load_validate_database_df(categorical_columns,
                                    nlp_columns,
                                    target_columns,
@@ -97,7 +81,7 @@ def load_XY(categorical_columns,
     #X = df[nlp_columns+categorical_columns]
     X = df[nlp_columns]
     Y = df[target_columns]
-    
+
     return X, Y
 
 
@@ -138,10 +122,14 @@ def tokenize(text):
 # In order to be able to serialize an object (pickle)
 # we cannot use lambdas in it
 def squeeze(x):
+    """Squeeze text array.
+    NLP processing requires a reshape."""
     return x.squeeze()
 
 
 def toarray(x):
+    """Convert to array.
+    NLP processing requires a reshape."""
     return x.toarray()
 
 
@@ -164,9 +152,9 @@ def build_model(config):
     
     Returns: None.
     """
-    categorical_transformer = Pipeline(steps=[
-        ('imputer', SimpleImputer(strategy="most_frequent")),
-        ('onehot', OneHotEncoder(sparse_output=False, drop="first", handle_unknown="ignore"))])
+    #categorical_transformer = Pipeline(steps=[
+    #    ('imputer', SimpleImputer(strategy="most_frequent")),
+    #    ('onehot', OneHotEncoder(sparse_output=False, drop="first", handle_unknown="ignore"))])
 
     # CountVectorizer and TfidfTransformer have some issues
     # with the size of the arrays, and they require some reshaping
@@ -178,13 +166,13 @@ def build_model(config):
         ("toarray", FunctionTransformer(toarray)),
     ])
 
-    processor = ColumnTransformer(
-        transformers=[
-            ("cat", categorical_transformer, config["categorical_columns"]),
-            ("nlp", nlp_transformer, config["nlp_columns"]),
-        ],
-        remainder="drop",  # This drops the columns that we do not transform
-    )
+    #processor = ColumnTransformer(
+    #    transformers=[
+    #        ("cat", categorical_transformer, config["categorical_columns"]),
+    #        ("nlp", nlp_transformer, config["nlp_columns"]),
+    #    ],
+    #    remainder="drop",  # This drops the columns that we do not transform
+    #)
 
     # MultiOutputClassifier is used to handle N-D target
     # However note that "this strategy consists in fitting one classifier per target",
@@ -197,19 +185,21 @@ def build_model(config):
                 RandomForestClassifier(**config["random_forest_parameters"]))),
         ]
     )
-    
+
     param_grid = {
-        'classifier__estimator__n_estimators': config["grid_search"]["hyperparameters"]["n_estimators"], # 100, 200
-        'classifier__estimator__min_samples_split': config["grid_search"]["hyperparameters"]["min_samples_split"] # 2, 3
+        'classifier__estimator__n_estimators':
+            config["grid_search"]["hyperparameters"]["n_estimators"],
+            'classifier__estimator__min_samples_split':
+            config["grid_search"]["hyperparameters"]["min_samples_split"]
     }
-    
+
     # Define Grid Search
     # Define Grid Search
     grid = GridSearchCV(pipe,
                         param_grid=param_grid,
                         #scoring=config["grid_search"]["scoring"], # "f1"
-                        cv=config["grid_search"]["cv"]) # 3
-    
+                        cv=config["grid_search"]["cv"])
+
     return grid
 
 
@@ -227,22 +217,9 @@ def evaluate_model(model, X_test, Y_test, category_names):
         report (list): list of strings that contain the evaluation
             results.
     """
-    """The trained model/pipeline is evaluated.
-    The results are printed and returned in a list of strings.
-    
-    Args:
-        model (GridSearchCV): trained inference pipeline.
-        X_test (pd.DataFrame): features of the test split.
-        Y_test (pd.DataFrame): targets of the test split.
-        category_names (list): names of the target columns.
-    
-    Returns:
-        report (list): list of strings that contain the evaluation
-            results.
-    """
     # Predict test split
     Y_pred = model.predict(X_test)
-    
+
     # Generate report
     report = []
     report.append(f"Best estimator: \n{model.best_estimator_}")
@@ -258,15 +235,6 @@ def evaluate_model(model, X_test, Y_test, category_names):
 
 
 def save_evaluation(report, evaluation_filepath):
-    """Save evaluation report to file.
-    Wrapper function of the function
-    save_evaluation_report() in the file manager module.
-    
-    Args:
-        report (list): list of evaluation strings.
-        evaluation_filepath (str): file path to save the evaluation report.
-    Returns: None.
-    """
     """Save evaluation report to file.
     Wrapper function of the function
     save_evaluation_report() in the file manager module.
@@ -360,15 +328,15 @@ def run_training(config_filepath,
                                                         test_size=config["test_size"],
                                                         random_state=config["random_seed"])
     logger.info("Dataset loaded from SQLite database, validated and split.")
-    
+
     print('Building model...')
     model_grid = build_model(config)
     logger.info("Model built.")
-    
+
     print('Training model...')
     model_grid.fit(X_train, Y_train)
     logger.info("Model trained; best model: %s", str(model_grid.best_params_))
-    
+
     print('Evaluating model...')
     report = evaluate_model(model_grid, X_test, Y_test, config["target_columns"])
     save_evaluation(report, config["evaluation_filepath"])

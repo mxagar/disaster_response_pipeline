@@ -25,7 +25,6 @@ from sqlite3 import OperationalError
 #from sklearn.multioutput import MultiOutputClassifier
 from sklearn.pipeline import Pipeline
 
-
 # Logging configuration
 logging.basicConfig(
     #filename='./logs/disaster_response_pipeline.log', # filename, where it's dumped

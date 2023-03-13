@@ -19,13 +19,15 @@ The script expects
 - the proper datasets to be located in `./data`
     or the folder specified in `config.yaml`.
 
+Pylint: 9.17/10.
+
 Author: Mikel Sagardia
 Date: 2023-03-11
 '''
-from sqlalchemy import create_engine
 import pytest
 import pandas as pd
 from sqlite3 import OperationalError
+from sqlalchemy import create_engine
 
 # IMPORTANT: the file conftest.py defines the fixtures used in here
 # and it contains the necessary imports!
