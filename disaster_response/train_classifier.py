@@ -143,15 +143,6 @@ def build_model(config):
     
     Returns: None.
     """
-    """A multi-target classification model is generated
-    embedded in a Pipeline and a GridSearch.
-    
-    Args:
-        config (dict): dictionary with all config parameters
-            from config.yaml.
-    
-    Returns: None.
-    """
     #categorical_transformer = Pipeline(steps=[
     #    ('imputer', SimpleImputer(strategy="most_frequent")),
     #    ('onehot', OneHotEncoder(sparse_output=False, drop="first", handle_unknown="ignore"))])
@@ -265,27 +256,6 @@ def run_training(config_filepath,
                  database_filepath=None,
                  model_filepath=None,
                  evaluation_filepath=None):
-    """Training pipeline, with the following steps:
-    
-    - Load preprocessed (ETL) dataset from database.
-    - Build an inference pipeline with a model embedded
-    in a GridSearchCV, and based on a RandomForestClassifier.
-    - Train the inference pipeline.
-    - Evaluate the trained pipeline with the test split.
-    - Save the inference artifact (model) and teh evaluation report.
-    
-    All the necessary parameters (e.g., paths, etc.) and in the
-    configuration file config.yaml. However, some filenames/paths
-    can be overwritten.
-    
-    Args:
-        config_filepath (str): configuration file path.
-        database_filepath (str): path to the database where the data is.
-        model_filepath (str): path where the inference artifact is saved.
-        evaluation_filepath (str): path where the evaluation report is saved.
-        
-    Returns: None.
-    """
     """Training pipeline, with the following steps:
     
     - Load preprocessed (ETL) dataset from database.
