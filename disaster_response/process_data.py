@@ -7,7 +7,7 @@ of the project, executing these steps:
 
 All settings are in config.yaml.
 
-Pylint: X
+Pylint: 8.70/10.
 
 To use this, run in a correct environment:
 
@@ -40,14 +40,14 @@ def load_data(messages_filepath, categories_filepath):
     # Load and validate datasets
     messages, categories = load_validate_datasets(messages_filepath,
                                                   categories_filepath)
-    
+
     # Merge datasets
     df = pd.merge(left=messages,
             right=categories,
             how='inner',
             left_on='id',
             right_on='id')
-    
+
     return df
 
 def clean_data(df, target_columns, nlp_columns):
@@ -67,29 +67,30 @@ def clean_data(df, target_columns, nlp_columns):
     """
     # Create a dataframe of the 36 individual category columns
     categories = df.categories.str.split(pat=";", n=-1, expand=True)
-    
+
     # Select the first row of the categories dataframe
     # and use it to extract a list of new column names for categories.
     row = categories.iloc[0,:].to_list()
     category_colnames = [r.split('-')[0] for r in row]
     categories.columns = category_colnames
-    
+
     # Check that the categories are the expected (not necessarily in same order)
-    for i, col in enumerate(category_colnames):
+    #for i, col in enumerate(category_colnames):
+    for col in category_colnames:
         try:
             #assert col == target_columns[i]
             assert col in target_columns
         except AssertionError as e:
             logger.error("Unexpected category column found in merged dataset: %s.", col)
             raise e
-    
+
     # Map cell values from string-0/1 to 0/1
     for column in categories:
         # Set each value to be the last character of the string
-        categories[column] = categories[column].str.split('-').str.get(1)     
+        categories[column] = categories[column].str.split('-').str.get(1)
         # Convert column from string to numeric
         categories[column] = categories[column].astype(str).astype('int32')
-    
+
     # Drop the original categories column from `df`
     df.drop('categories', inplace=True, axis=1)
     # Concatenate the original dataframe with the new `categories` dataframe
@@ -100,7 +101,7 @@ def clean_data(df, target_columns, nlp_columns):
 
     # Drop any entry in which the input message is NA
     df.dropna(subset=nlp_columns, inplace=True)
-    
+
     # Drop any entry in which the target categories are NA
     df.dropna(subset=category_colnames, inplace=True)
 
