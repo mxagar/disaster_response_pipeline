@@ -1,18 +1,27 @@
+"""This module implements a Flask web app
+in which the the library/package disaster_response
+is employed to (1) plot some disaster message
+statistics and (2) predict the target categories of
+a message input by the user.
+
+Author: Mikel Sagardia
+Date: 2023-03-13
+"""
 import json
 import plotly
 import pandas as pd
-
-#from nltk.stem import WordNetLemmatizer
-#from nltk.tokenize import word_tokenize
+import numpy as np
 
 from flask import Flask
-from flask import render_template, request, jsonify
-from plotly.graph_objs import Bar
-#from sklearn.externals import joblib
+from flask import render_template, request #, jsonify
+from plotly.graph_objs import Bar, Layout #, Figure
 from sqlalchemy import create_engine
 
-from disaster_response import load_validate_config, load_validate_model, DATABASE_TABLE_NAME
+from disaster_response import (load_validate_config,
+                               load_validate_model,
+                               DATABASE_TABLE_NAME)
 
+# Falsk web app instance
 app = Flask(__name__)
 
 # Load config dictionary
@@ -25,54 +34,85 @@ df = pd.read_sql_table(DATABASE_TABLE_NAME, engine)
 # Load model
 model = load_validate_model(model_artifact=config['model_filepath'])
 
-# Index webpage displays cool visuals and receives user input text for model
 @app.route('/')
 @app.route('/index')
 def index():
-    
+    """Index page.
+    This page first displays some plots related
+    to the training dataset. Then, if the user inputs
+    a message, it predicts the categories/targets."""
+    graphs = []
     # Extract data needed for visuals
-    # TODO: Below is an example - modify to extract data for your own visuals
     genre_counts = df.groupby('genre').count()['message']
     genre_names = list(genre_counts.index)
     
-    # create visuals
-    # TODO: Below is an example - modify to create your own visuals
-    graphs = [
-        {
-            'data': [
-                Bar(
-                    x=genre_names,
-                    y=genre_counts
-                )
-            ],
+    # 1. Distribution of Message Genres
+    graph_one = []
+    graph_one.append(
+        Bar(x=genre_names,
+            y=genre_counts)
+        )
+    layout_one = Layout(title = 'Distribution of Message Genres',
+                        yaxis = {'title': "Count"},
+                        xaxis = {'title': "Genre"})
 
-            'layout': {
-                'title': 'Distribution of Message Genres',
-                'yaxis': {
-                    'title': "Count"
+    graphs.append(dict(data=graph_one, layout=layout_one))
+
+    # 2. Distribution of Message Categories
+    #category_name = list(df.columns[4:])
+    category_names = config["target_columns"]
+    category_counts = [np.sum(df[col]) for col in category_names]
+    graph_two = []
+    graph_two.append(Bar(x=category_names,
+                         y=category_counts))
+    layout_two =  Layout(title = 'Distribution of Message Categories',
+                         yaxis = {'title': "Count"},
+                         xaxis = {'title': "Genre"})
+
+    graphs.append(dict(data=graph_two, layout=layout_two))
+
+    # 3. Top 10 Message Categories
+    #categories = df.iloc[:,4:]
+    categories = df[category_names]
+    category_means = categories.mean().sort_values(ascending=False)[1:11]
+
+    graph_three = []
+    graph_three.append(
+            Bar(x=list(category_means.index), # category_names
+                y=category_means*100))
+    layout_three =  Layout(title = 'Top 10 Message Categories',
+                yaxis = {
+                    'title': "Percentage", 
+                    'titlefont': {'color': 'black', 'size': 12}
                 },
-                'xaxis': {
-                    'title': "Genre"
-                }
-            }
-        }
-    ]
+                xaxis = {
+                'title': "Category", 
+                'titlefont': {'color': 'black', 'size': 12},
+                'tickangle':45,
+                'automargin': True
+                  }
+                )
     
-    # encode plotly graphs in JSON
+    graphs.append(dict(data=graph_three, layout=layout_three))
+
+    # Encode Plotly graphs in JSON
     ids = ["graph-{}".format(i) for i, _ in enumerate(graphs)]
     graphJSON = json.dumps(graphs, cls=plotly.utils.PlotlyJSONEncoder)
     
-    # render web page with plotly graphs
+    # Render web page with Plotly graphs
     return render_template('master.html', ids=ids, graphJSON=graphJSON)
 
-
-# web page that handles user query and displays model results
 @app.route('/go')
 def go():
-    # save user input in query
+    """Message classification page.
+    This pages handles the user query and displays
+    the model results."""
+    # Save user input in query
     query = request.args.get('query', '') 
 
-    # use model to predict classification for query
+    # Use model to predict classification for query
+    # FIXME: I need to pass a list with at least 2 elements (1 empty)
+    # due to the ML pipeline definition
     classification_labels = model.predict(pd.DataFrame(data=[query, ""], columns=['message']))[0]
     classification_results = dict(zip(df.columns[4:], classification_labels))
 
