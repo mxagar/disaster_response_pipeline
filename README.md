@@ -320,7 +320,10 @@ Note: in order to keep image size in line, [`.dockerignore`](.dockerignore) list
 
 ## References and Links
 
-
+- My personal notes on the [Udacity MLOps](https://www.udacity.com/course/machine-learning-dev-ops-engineer-nanodegree--nd0821) nanodegree: [mlops_udacity](https://github.com/mxagar/mlops_udacity).
+- My personal notes on the [Udacity Data Science](https://www.udacity.com/course/data-scientist-nanodegree--nd025) nanodegree: [data_science_udacity](https://github.com/mxagar/data_science_udacity)
+- Notes on how to transform research code into production-level packages: [customer_churn_production](https://github.com/mxagar/customer_churn_production).
+- My summary of data processing and modeling techniques: [eda_fe_summary](https://github.com/mxagar/eda_fe_summary).
 
 ## Authorship
 
